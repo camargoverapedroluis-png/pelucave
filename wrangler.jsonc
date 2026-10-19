@@ -1,0 +1,11 @@
+{
+  // Configuración de Cloudflare: publica solo la página generada, no todo el repositorio.
+  "name": "pelucave",
+  "compatibility_date": "2026-10-12",
+  "build": {
+    "command": "node tools/build.mjs --out=_site/index.html"
+  },
+  "assets": {
+    "directory": "./_site"
+  }
+}

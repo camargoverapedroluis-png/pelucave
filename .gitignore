@@ -7,6 +7,10 @@ playwright-report/
 blob-report/
 *.tmp-*
 
+# Página generada para Cloudflare y archivos de Wrangler
+_site/
+.wrangler/
+
 # Skills de Claude (no son parte de la página)
 .claude/
 
