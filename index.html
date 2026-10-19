@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Simulador y centro de aprendizaje de sistemas dinámicos y funciones de transferencia: conceptos interactivos, modelado paso a paso, simulaciones animadas y G(s) con su procedimiento completo.">
+  <meta name="theme-color" content="#0F1823">
+  <meta name="color-scheme" content="dark light">
+  <title>Laboratorio de Sistemas Dinámicos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F1823'/%3E%3Cpath d='M4 16h24M16 4v24' stroke='%239AABBD' stroke-opacity='.5' stroke-width='1.5'/%3E%3Cpath d='M8.5 8.5l5 5m0-5l-5 5' stroke='%23E3B25C' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='11' cy='22' r='3' fill='none' stroke='%236DD4B8' stroke-width='2'/%3E%3C/svg%3E">
+  <script>
+    /* Tema guardado (única preferencia persistida) aplicado antes de pintar; marca html.js. */
+    (function (root) {
+      root.classList.add('js');
+      try {
+        var saved = JSON.parse(window.localStorage.getItem('dsl.v1.theme'));
+        if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+      } catch (e) { /* almacenamiento no disponible: se queda el tema oscuro */ }
+    })(document.documentElement);
+  </script>
+  <link rel="stylesheet" href="vendor/fonts.css">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/shell.css">
+  <link rel="stylesheet" href="css/charts.css">
+  <link rel="stylesheet" href="css/scenes.css">
+  <link rel="stylesheet" href="css/sections/hero.css">
+  <link rel="stylesheet" href="css/sections/concepts.css">
+  <link rel="stylesheet" href="css/sections/wizard.css">
+  <link rel="stylesheet" href="css/sections/gallery.css">
+  <link rel="stylesheet" href="css/sections/tfengine.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="app-header" data-mount="shell-header"></header>
+
+  <main id="contenido" class="app-main" tabindex="-1">
+    <noscript><p class="app-noscript">Esta aplicación necesita JavaScript para mostrar las simulaciones y los cálculos.</p></noscript>
+
+    <section id="inicio" class="app-section" aria-labelledby="inicio-title" data-testid="section-inicio">
+      <div data-mount="hero"></div>
+    </section>
+
+    <section id="conceptos" class="app-section" aria-labelledby="conceptos-title" data-testid="section-conceptos">
+      <div data-mount="concepts"></div>
+    </section>
+
+    <section id="modelado" class="app-section" aria-labelledby="modelado-title" data-testid="section-modelado">
+      <div data-mount="wizard"></div>
+    </section>
+
+    <section id="galeria" class="app-section" aria-labelledby="galeria-title" data-testid="section-galeria">
+      <div data-mount="gallery"></div>
+    </section>
+
+    <section id="transferencia" class="app-section" aria-labelledby="transferencia-title" data-testid="section-transferencia">
+      <div data-mount="tfengine"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer" data-mount="shell-footer"></footer>
+
+  <!-- Bibliotecas (vendor/, sin red) -->
+  <script src="vendor/chart.js/chart.umd.min.js"></script>
+  <script src="vendor/katex/katex.min.js"></script>
+  <!-- Núcleo -->
+  <script src="js/core/ns.js"></script>
+  <script src="js/core/numeric.js"></script>
+  <script src="js/core/tf.js"></script>
+  <script src="js/core/latex.js"></script>
+  <!-- Interfaz -->
+  <script src="js/ui/icons-data.js"></script>
+  <script src="js/ui/components.js"></script>
+  <script src="js/ui/shell.js"></script>
+  <script src="js/viz/charts.js"></script>
+  <!-- Modelos y simulación -->
+  <script src="js/systems/registry.js"></script>
+  <script src="js/systems/simulator.js"></script>
+  <script src="js/systems/massSpring.js"></script>
+  <script src="js/systems/tanks.js"></script>
+  <script src="js/systems/rlc.js"></script>
+  <script src="js/systems/sir.js"></script>
+  <script src="js/systems/market.js"></script>
+  <script src="js/systems/pendulum.js"></script>
+  <!-- Escenas físicas -->
+  <script src="js/viz/scenes/registry.js"></script>
+  <script src="js/viz/scenes/massSpring.js"></script>
+  <script src="js/viz/scenes/tanks.js"></script>
+  <script src="js/viz/scenes/rlc.js"></script>
+  <script src="js/viz/scenes/sir.js"></script>
+  <script src="js/viz/scenes/market.js"></script>
+  <!-- Secciones -->
+  <script src="js/sections/hero.js"></script>
+  <script src="js/sections/concepts.js"></script>
+  <script src="js/sections/wizard.js"></script>
+  <script src="js/sections/gallery.js"></script>
+  <script src="js/sections/tfengine.js"></script>
+  <!-- Arranque -->
+  <script src="js/app.js"></script>
+</body>
+</html>

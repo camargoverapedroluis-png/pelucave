@@ -1,0 +1,30 @@
+{
+  "name": "laboratorio-sistemas-dinamicos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Laboratorio de Sistemas Dinámicos: simulador y centro de aprendizaje de sistemas dinámicos y funciones de transferencia (SPA en español, sin red).",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "vendor": "node tools/vendor.mjs",
+    "icons": "node tools/icons.mjs",
+    "build": "node tools/build.mjs",
+    "test": "node --test \"tests/unit/**/*.test.mjs\"",
+    "test:e2e": "playwright test",
+    "crosscheck": "uv run --with numpy --with scipy python tests/crosscheck/run.py",
+    "verify": "npm run vendor && npm run icons && npm run test && npm run crosscheck && npm run build && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@fontsource-variable/ibm-plex-sans": "5.3.0",
+    "@playwright/test": "1.63.0",
+    "axe-core": "4.14.0",
+    "chart.js": "4.5.1",
+    "katex": "0.16.47",
+    "lucide-static": "1.50.0"
+  }
+}

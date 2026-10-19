@@ -1,0 +1,21 @@
+# tools/icons/wizard.list — Propietario: wizard.
+# Iconos Lucide de #modelado: ejemplos, navegación del asistente, ensamblado, linealidad y comprobaciones.
+# Un nombre por línea. Tras editar: node tools/icons.mjs
+activity
+zap
+droplets
+virus
+arrow-left
+arrow-right
+play
+pause
+step-forward
+list-ordered
+rotate-ccw
+square-function
+book-open
+chart-line
+chart-spline
+circle-check
+circle-alert
+info

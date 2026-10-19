@@ -1,0 +1,797 @@
+/*
+ * css/sections/tfengine.css — Propietario: tfengine.
+ * Sección #transferencia (prefijo tf-). Reglas dentro de @layer sections; solo tokens de css/tokens.css.
+ * Especificidad ≤ 0,2,0, sin ids ni !important. Movimiento: transform/opacity (y color en resaltados).
+ *
+ *   ┌ encabezado: h2 + entrada ─────────────────────────────────────────────────┐
+ *   │ barra de modos: Desde un sistema · Forma estándar · Personalizada          │
+ *   ├ controles (fijos al desplazar) ┬ salida ─────────────────────────────────┤
+ *   │ selector / sliders /           │ G(s) grande + polos y ceros + estado     │
+ *   │ coeficientes                   │ Procedimiento paso a paso (7 plegables)  │
+ *   │                                │ escalón │ polos y ceros                  │
+ *   │                                │ métricas (franja) · impulso · Bode       │
+ *   └────────────────────────────────┴──────────────────────────────────────────┘
+ *   Dos columnas desde un contenedor de 680 px con la ventana ≥ 768 px (tableta en vertical: controles
+ *   de 240–280 px, fijos, junto a las gráficas); desde 900 px, controles de 300–360 px. Teléfono (< 768 px):
+ *   una sola columna, controles arriba y sin fijar. La barra «Procedimiento paso a paso» (título,
+ *   «Paso siguiente», «Mostrar todo») queda fija bajo la cabecera mientras se recorren los pasos; en
+ *   teléfono, solo sus acciones. Los pasos fuera de la vista o plegados no se maquetan (content-visibility).
+ */
+@layer sections {
+  /* ---------------------------------------------------------------- raíz y encabezado */
+  .tf-root {
+    container: tf / inline-size;
+    min-width: 0;
+  }
+
+  .tf-head {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .tf-lede {
+    max-width: 62ch;
+    color: var(--muted);
+    font-size: var(--text-base);
+    line-height: var(--lh-body);
+  }
+
+  /* Barra de modos: las pestañas abarcan todo el ancho; los paneles van en la columna de controles. */
+  .tf-modebar {
+    margin-top: var(--space-6);
+  }
+  .tf-modebar .ds-tabs__panels {
+    display: none;
+  }
+
+  .tf-layout {
+    margin-top: var(--space-5);
+  }
+
+  .tf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  /* Tableta en vertical (768–899 px de contenedor útil): dos columnas estrechas para que el slider y la
+     gráfica que mueve se vean a la vez (TFE-02). El orden entrada → derivación → gráficas no cambia. */
+  @media (min-width: 768px) {
+    @container tf (min-width: 680px) {
+      .tf-grid {
+        grid-template-columns: minmax(240px, 280px) minmax(380px, 1fr);
+      }
+      /* Panel fijo: 16 px de margen arriba y abajo. Como cada nombre ocupa su propia fila (TFE-03), el
+         ritmo vertical se ajusta (16 px entre deslizadores y de relleno vertical) para que el sistema por
+         defecto quepa entero a 1024×768 sin desplazar el panel (prueba de regresión en tfengine.spec). */
+      .tf-controls {
+        position: sticky;
+        top: calc(var(--header-h) + var(--space-4));
+        max-height: calc(100dvh - var(--header-h) - var(--space-6));
+        padding: var(--space-4);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--surface-3) transparent;
+      }
+      .tf-controls .tf-sliders {
+        gap: var(--space-4);
+      }
+    }
+  }
+  @container tf (min-width: 900px) {
+    .tf-grid {
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+      gap: var(--space-6);
+    }
+    .tf-controls {
+      padding: var(--space-4) var(--space-5);
+    }
+  }
+  @container tf (min-width: 1200px) {
+    .tf-grid {
+      grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+    }
+  }
+
+  /* ---------------------------------------------------------------- controles */
+  .tf-mode-panel {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+  .tf-mode-panel:focus-visible {
+    outline-offset: 6px;
+  }
+
+  .tf-select {
+    display: grid;
+    width: 100%;
+  }
+
+  .tf-io {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+  }
+  .tf-io__pair {
+    color: var(--ink);
+    font-size: var(--text-base);
+  }
+  .tf-io__text {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .tf-io__k {
+    color: var(--ink);
+    font-weight: var(--fw-medium);
+  }
+
+  .tf-sliders {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+  /* Columna estrecha (TFE-03): el nombre va en su propia fila, encima de la ayuda, el reinicio y el campo
+     numérico (etiqueta encima, SKILLS_BRIEF §4), y cabe en una línea sin partir palabras. El orden visual
+     de la segunda fila sigue el del DOM (ayuda → reinicio → número), igual que el del tabulador. */
+  .tf-sliders .ds-slider__head {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "label label label"
+      "help reset value";
+    align-items: center;
+    gap: var(--space-1) var(--space-1);
+  }
+  .tf-sliders .ds-slider__label {
+    grid-area: label;
+  }
+  .tf-sliders .ds-help {
+    grid-area: help;
+    margin: 0;
+  }
+  .tf-sliders .ds-slider__reset {
+    grid-area: reset;
+    margin-left: 0;
+  }
+  .tf-sliders .ds-slider__value {
+    grid-area: value;
+    justify-self: end;
+  }
+  .tf-sliders .ds-slider__name {
+    white-space: nowrap;
+    hyphens: manual;
+  }
+  /* Símbolo delante del nombre, como en la franja de métricas. */
+  .tf-sliders .ds-slider__sym {
+    order: -1;
+  }
+
+  .tf-inactive {
+    margin-top: calc(-1 * var(--space-2));
+  }
+
+  .tf-panel-foot {
+    display: flex;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  .tf-std-form {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+    color: var(--ink);
+    font-size: var(--text-base);
+    white-space: normal;
+    overflow-x: auto;
+  }
+
+  .tf-coef {
+    font-family: var(--font-numeric);
+    letter-spacing: 0.02em;
+  }
+  .tf-coef-error {
+    font-size: var(--text-sm);
+  }
+
+  .tf-degree {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  /* Nota de recorte del coeficiente principal (TFE-08): región viva siempre presente, oculta si está vacía. */
+  .tf-trim-note {
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+  .tf-trim-note:empty {
+    display: none;
+  }
+
+  .tf-presets-wrap {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+  .tf-presets {
+    gap: var(--space-1);
+  }
+  .tf-preset {
+    min-height: 36px;
+  }
+
+  /* ---------------------------------------------------------------- columna de salida */
+  .tf-main {
+    container: tfmain / inline-size;
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+
+  /* G(s): el elemento protagonista de la sección. */
+  /* G(s) a la izquierda; polos, ceros y estado a la derecha si caben (si no, debajo). */
+  .tf-gpanel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5) var(--space-8);
+    padding: var(--space-6);
+  }
+  .tf-g {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding-block: var(--space-1);
+    overflow-x: auto;
+    overflow-y: hidden;
+    color: var(--ink);
+    font-size: clamp(1.25rem, 0.9rem + 1.6cqi, 1.75rem);
+    line-height: 1.2;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface-3) transparent;
+  }
+
+  /* Entrada no válida (TFE-10): la última G(s) válida conserva su contraste; un distintivo con texto y
+     un borde de aviso dicen que está desactualizada. */
+  .tf-gpanel.is-stale {
+    border-color: var(--warning);
+  }
+  .tf-stale-badge {
+    display: inline-flex;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: none;
+    color: var(--warning);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-ui);
+  }
+  .tf-stale-badge[hidden] {
+    display: none;
+  }
+
+  .tf-gside {
+    display: grid;
+    flex: 0 1 360px;
+    gap: var(--space-3);
+    min-width: min(100%, 260px);
+  }
+
+  .tf-roots {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .tf-roots__row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
+  .tf-glyph {
+    flex: none;
+    width: 1.25em;
+    font-size: var(--text-base);
+    font-weight: var(--fw-semibold);
+    text-align: center;
+  }
+  .tf-glyph--pole { color: var(--c-pole); }
+  .tf-glyph--zero { color: var(--c-zero); }
+  .tf-roots__k {
+    flex: none;
+    min-width: 3.5em;
+    color: var(--muted);
+  }
+  .tf-roots__v {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    color: var(--ink);
+    font-size: var(--text-base);
+    scrollbar-width: thin;
+  }
+  .tf-roots__none {
+    color: var(--subtle);
+  }
+
+  .tf-chips {
+    gap: var(--space-2);
+  }
+
+  .tf-gnotes {
+    flex: 1 1 100%;
+    display: grid;
+    gap: var(--space-3);
+  }
+  .tf-gnotes:empty {
+    display: none;
+  }
+  .tf-gnote {
+    max-width: none;
+  }
+
+  .tf-diag {
+    max-width: none;
+  }
+  .tf-diag__body {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+  .tf-diag__title {
+    font-weight: var(--fw-semibold);
+  }
+
+  /* Resaltado al llegar desde la galería (tf:open): anillo de acento que aparece y se apaga. */
+  .tf-controls::after,
+  .tf-gpanel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 2px var(--accent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tf-flash::after {
+    animation: tf-flash calc(var(--dur-highlight) * 4) var(--ease-out) both;
+  }
+  @keyframes tf-flash {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    65% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* ---------------------------------------------------------------- procedimiento */
+  .tf-proc {
+    padding: var(--space-5) var(--space-5) var(--space-3);
+  }
+  /* Barra fija del procedimiento (TFE-01): mientras se recorren los pasos, el título, «Paso siguiente» y
+     «Mostrar todo» quedan bajo la cabecera. Es la caja fija y no solo las acciones, porque un elemento
+     sticky solo se mueve dentro de su padre. Superficie opaca (--surface-1) con borde de 1 px y sin
+     backdrop-filter: no suma una capa de vidrio de nivel A (SKILLS_BRIEF §1). */
+  .tf-proc__head {
+    position: sticky;
+    top: var(--header-h);   /* pegada a la cabecera: sin rendija por la que asome el texto que pasa debajo */
+    z-index: var(--z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
+    margin-inline: calc(-1 * var(--space-3));
+    margin-bottom: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+  }
+  .tf-proc__actions {
+    gap: var(--space-2);
+  }
+
+  .tf-steps {
+    --tf-stagger: min(var(--stagger), 60ms);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* «Paso siguiente» deja el paso nuevo entero bajo la barra fija: cabecera + barra + 12 px. */
+  .tf-steps__item {
+    min-width: 0;
+    scroll-margin-top: calc(var(--header-h) + var(--tf-bar-h, 3.75rem) + var(--space-3));
+    /* TFE-15: con los siete pasos abiertos, los que quedan fuera de la vista no recalculan estilo, maqueta
+       ni pintura en cada cambio; conservan su último alto (auto) para que el desplazamiento no salte. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 72px;
+  }
+  .tf-steps__item:last-child > * {
+    border-bottom: 0;
+  }
+  /* Un paso plegado no maqueta su contenido (TFE-15): content-visibility: hidden llega al terminar el
+     pliegue (transición discreta), igual que el visibility: hidden del componente; al abrir, en el acto. */
+  .tf-steps .ds-collapse__inner {
+    transition: visibility 0s linear var(--dur-toggle), content-visibility var(--dur-toggle) allow-discrete;
+  }
+  .tf-steps :where(.ds-collapse:not(.is-open)) .ds-collapse__inner {
+    content-visibility: hidden;
+  }
+  .tf-steps :where(.ds-collapse.is-open) .ds-collapse__inner {
+    transition-delay: 0s;
+  }
+
+  /* Entrada en secuencia de los siete pasos la primera vez que se pinta el procedimiento. */
+  .is-intro > .tf-steps__item {
+    animation: tf-rise var(--dur-step-in) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger));
+  }
+
+  .tf-step__body {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  /* Cada bloque del paso aparece en 250 ms, escalonado 60 ms, al abrirse el paso (TFE-01). */
+  .tf-step:where(.is-open) .tf-line {
+    animation: tf-rise var(--dur-step-in) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--tf-stagger, 60ms));
+  }
+  .tf-line.is-static {
+    animation: none;
+  }
+  /* Movimiento reducido: el paso aparece entero, sin recorrido ni fundido. */
+  @media (prefers-reduced-motion: reduce) {
+    .tf-step:where(.is-open) .tf-line,
+    .is-intro > .tf-steps__item {
+      animation: none;
+    }
+  }
+  :where([data-motion="reduce"]) .tf-step:where(.is-open) .tf-line,
+  :where([data-motion="reduce"]) .is-intro > .tf-steps__item {
+    animation: none;
+  }
+  /* Tampoco se despliega en 180 ms: el paso abierto ocupa su alto final en el mismo cuadro, así que el
+     desplazamiento instantáneo de «Paso siguiente» llega a su sitio definitivo. */
+  @media (prefers-reduced-motion: reduce) {
+    .tf-steps .ds-collapse__region,
+    .tf-steps .ds-collapse__inner {
+      transition: none;
+    }
+  }
+  :where([data-motion="reduce"]) .tf-steps .ds-collapse__region,
+  :where([data-motion="reduce"]) .tf-steps .ds-collapse__inner {
+    transition: none;
+  }
+  @keyframes tf-rise {
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--travel-step) / 2));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Resaltado de lo que cambió con un slider: color de fondo, 400 ms. */
+  .tf-line {
+    min-width: 0;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--dur-highlight) var(--ease-out);
+  }
+  .tf-line.is-changed {
+    background-color: var(--accent-soft);
+    transition-duration: 0s;
+  }
+
+  .tf-p {
+    color: var(--ink);
+    font-size: var(--text-base);
+    line-height: var(--lh-body);
+  }
+  .tf-sub {
+    margin-top: var(--space-2);
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-semibold);
+  }
+  .tf-eq {
+    padding: var(--space-2) var(--space-3);
+    color: var(--ink);
+    font-size: var(--text-base);
+  }
+  .tf-list {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding-left: 1.25em;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .tf-note {
+    max-width: none;
+  }
+
+  /* Tablas: Routh, residuos, métricas. */
+  .tf-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .tf-routh,
+  .tf-pf,
+  .tf-mt {
+    width: auto;
+    min-width: min(100%, 420px);
+  }
+  .tf-routh td {
+    min-width: 4.5em;
+    text-align: center;
+  }
+  .tf-routh__row {
+    color: var(--muted);
+  }
+  .tf-routh .tf-routh__first {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+  .tf-routh .tf-routh__sign {
+    min-width: 3em;
+    color: var(--muted);
+    font-weight: var(--fw-semibold);
+  }
+  .tf-routh .is-change {
+    color: var(--danger);
+  }
+  .tf-routh__flag {
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+  }
+  .tf-pf td {
+    text-align: right;
+  }
+  .tf-mt td {
+    vertical-align: middle;
+  }
+  .tf-mt__formula {
+    color: var(--ink);
+  }
+  .tf-mt .is-none {
+    color: var(--subtle);
+    font-size: var(--text-xs);
+  }
+  .tf-sym {
+    color: var(--ink);
+  }
+
+  .tf-tag {
+    display: inline-block;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .tf-tag--exact {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+  .tf-tag--approx {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+
+  .tf-params {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+  }
+  /* Lecturas de más de 6 cifras (paramsGrid): una cifra de 10 dígitos mide unos 145 px a --text-lg, más
+     que el valor de una columna de 150 px. Con columnas de 230 px caben la cifra y «rad/s» en una línea;
+     en una sola columna más estrecha (teléfono) la unidad baja de línea en vez de montarse sobre la
+     lectura vecina o salirse del panel. */
+  .tf-params--wide {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  }
+  .tf-params--wide .ds-readout__value {
+    flex-wrap: wrap;
+  }
+
+  /* ---------------------------------------------------------------- gráficas */
+  .tf-charts {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+  .tf-charts__top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .tf-frame-step { --ch-aspect: 16 / 10; }
+  .tf-frame-pz { --ch-aspect: 16 / 10; }
+  .tf-frame-impulse { --ch-aspect: 21 / 8; }
+  .tf-frame-bode { --ch-aspect: 7 / 2; }
+  @container tfmain (min-width: 760px) {
+    .tf-charts__top {
+      grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    }
+    .tf-frame-pz {
+      --ch-aspect: 1 / 1;
+    }
+    /* Integrador: con columnas 1.55fr | 1fr, la proporción 1.55 : 1 del escalón iguala su altura a la del
+       mapa cuadrado, así los bordes inferiores y los botones «Ver datos» quedan alineados (con 16 / 10
+       diferían unos 12 px). */
+    .tf-frame-step {
+      --ch-aspect: 31 / 20;
+    }
+  }
+
+  .tf-fig {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+    margin: 0;
+  }
+  .tf-fig__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    min-height: 44px;
+  }
+  .tf-fig__title {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-ui);
+    letter-spacing: 0;
+  }
+  .tf-fig__note {
+    max-width: none;
+  }
+
+  .tf-fig--bode {
+    gap: var(--space-3);
+  }
+
+  /* Métricas: una franja con divisores, no una fila de tarjetas iguales. */
+  .tf-metrics {
+    border: 1px solid var(--glass-b-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-b-bg);
+    box-shadow: var(--glass-b-highlight);
+    overflow: hidden;
+  }
+  /* flex: la última fila se estira y no deja celdas vacías. */
+  .tf-metrics__grid {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+  .tf-metric {
+    display: grid;
+    flex: 1 1 160px;
+    align-content: start;
+    gap: var(--space-1);
+    min-width: 0;
+    padding: var(--space-4) var(--space-5);
+    box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line);
+  }
+  .tf-metric__label {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .tf-metric__sym {
+    color: var(--ink);
+  }
+  .tf-metric__value {
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+  .tf-metric__unit {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+  }
+  .is-empty .tf-metric__num {
+    color: var(--subtle);
+  }
+  .tf-metric__sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--lh-ui);
+  }
+  .tf-metric__sub:empty {
+    display: none;
+  }
+  .tf-metrics__note {
+    max-width: none;
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--line);
+  }
+  .tf-metrics__note:empty {
+    display: none;
+  }
+
+  .tf-charts-empty {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    color: var(--muted);
+  }
+
+  /* ---------------------------------------------------------------- teléfono */
+  @media (max-width: 767px) {
+    /* Las tres pestañas caben a 375px: columnas iguales y etiquetas en dos líneas si hace falta. */
+    .tf-modebar .ds-tabs__tab {
+      flex: 1 1 0;
+      justify-content: center;
+      padding-inline: var(--space-2);
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+    }
+    .tf-gpanel {
+      padding: var(--space-5) var(--space-4);
+    }
+    .tf-proc {
+      padding-inline: var(--space-3);
+    }
+    /* En teléfono solo quedan fijas las acciones: el título se va con el texto y la barra ocupa una fila
+       (TFE-01). La cabecera deja de ser caja; sus hijos pasan a ser hijos del panel. */
+    .tf-proc__head {
+      display: contents;
+    }
+    .tf-proc__title {
+      margin-bottom: var(--space-2);
+    }
+    .tf-proc__actions {
+      position: sticky;
+      top: var(--header-h);
+      z-index: var(--z-sticky);
+      margin-inline: calc(-1 * var(--space-2));
+      margin-bottom: var(--space-2);
+      padding: var(--space-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--surface-1);
+    }
+    .tf-metric {
+      padding: var(--space-3) var(--space-4);
+    }
+    .tf-frame-step { --ch-aspect: 4 / 3; }
+    .tf-frame-bode { --ch-aspect: 2 / 1; }
+  }
+}

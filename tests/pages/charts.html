@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F1823">
+  <title>Gráficas: página de prueba</title>
+  <!-- Página aislada de la capa de gráficas (propietario: charts). Solo recursos locales. -->
+  <link rel="stylesheet" href="../../vendor/fonts.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/charts.css">
+  <style>
+    /* Maquetación de la página de prueba: solo tokens, sin colores literales. */
+    .demo { max-width: var(--container-max); margin: 0 auto; padding: var(--space-6) var(--gutter) var(--space-8); }
+    .demo-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .demo-head h1 { font-size: var(--text-xl); line-height: var(--lh-heading); letter-spacing: var(--tracking-heading); }
+    .demo-head p { color: var(--muted); margin-top: var(--space-2); }
+    .demo-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .demo-btn {
+      min-height: var(--control-h); padding: 0 var(--space-4); border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+      font: inherit; font-size: var(--text-sm); cursor: pointer;
+    }
+    .demo-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-5); }
+    .demo-card {
+      grid-column: span 12; min-width: 0; padding: var(--space-4); border-radius: var(--radius-md);
+      background: var(--glass-b-bg); border: 1px solid var(--glass-b-border); box-shadow: var(--glass-b-highlight);
+    }
+    .demo-card h2 { font-size: var(--text-lg); line-height: var(--lh-heading); margin-bottom: var(--space-1); }
+    .demo-card .demo-note { color: var(--muted); font-size: var(--text-sm); margin-bottom: var(--space-3); }
+    .demo-controls { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); align-items: end; margin-bottom: var(--space-4); }
+    .demo-field { display: grid; gap: var(--space-1); min-width: 180px; font-size: var(--text-sm); color: var(--muted); }
+    .demo-field output { color: var(--ink); font-variant-numeric: var(--font-numeric); }
+    .demo-field input[type="range"] { accent-color: var(--accent); width: 100%; min-height: var(--control-h-sm); }
+    .demo-check { display: inline-flex; gap: var(--space-2); align-items: center; font-size: var(--text-sm); min-height: var(--control-h); }
+    .demo-check input { accent-color: var(--accent); width: 18px; height: 18px; }
+    .demo-grid > * { grid-column: 1 / -1; min-width: 0; }
+    .demo-stack { display: grid; gap: var(--space-2); align-content: start; }
+    .ch-frame.demo-pz { --ch-aspect: 5 / 4; }
+    .ch-frame.demo-bode { --ch-aspect: 3 / 1; }
+    @media (min-width: 1024px) {
+      .span-7 { grid-column: span 7; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+    }
+  </style>
+</head>
+<body>
+  <main class="demo" id="contenido">
+    <div class="demo-head">
+      <div>
+        <h1>Capa de gráficas</h1>
+        <p>Página de prueba de DSL.viz.charts: datos deterministas, tema desde los tokens, interacción con puntero y teclado.</p>
+      </div>
+      <div class="demo-actions">
+        <button type="button" class="demo-btn" id="btn-theme" data-testid="demo-theme">Tema claro</button>
+        <button type="button" class="demo-btn" id="btn-stream" data-testid="demo-stream">Reproducir</button>
+      </div>
+    </div>
+
+    <div class="demo-grid">
+      <section class="demo-card" aria-labelledby="t-time">
+        <h2 id="t-time">Serie temporal en vivo</h2>
+        <p class="demo-note">Ventana deslizante de 10 s; los datos llegan por push y la gráfica se redibuja como mucho 30 veces por segundo.</p>
+        <div class="ch-frame ch-frame--wide"><canvas data-testid="ch-demo-time"></canvas></div>
+      </section>
+
+      <section class="demo-card" aria-labelledby="t-tf">
+        <h2 id="t-tf">Función de transferencia de segundo orden</h2>
+        <p class="demo-note">G(s) = (ωn²/a)·(s + a)/(s² + 2ζωn s + ωn²). Arrastre un deslizador: la curva se transforma y la anterior queda como fantasma.</p>
+        <div class="demo-controls">
+          <label class="demo-field">Amortiguamiento ζ <output id="o-zeta">0.35</output>
+            <input type="range" id="i-zeta" min="0.05" max="2" step="0.01" value="0.35" data-testid="demo-zeta">
+          </label>
+          <label class="demo-field">Frecuencia natural ωn (rad/s) <output id="o-wn">2</output>
+            <input type="range" id="i-wn" min="0.5" max="6" step="0.05" value="2" data-testid="demo-wn">
+          </label>
+          <label class="demo-field">Cero en s = −a <output id="o-a">3</output>
+            <input type="range" id="i-a" min="0.5" max="10" step="0.1" value="3" data-testid="demo-a">
+          </label>
+          <label class="demo-check"><input type="checkbox" id="i-zero" checked data-testid="demo-zero"> Incluir el cero</label>
+        </div>
+        <div class="demo-grid">
+          <div class="span-7 demo-stack">
+            <div class="ch-frame"><canvas data-testid="ch-demo-step"></canvas></div>
+          </div>
+          <div class="span-5 demo-stack">
+            <div class="ch-frame demo-pz"><canvas data-testid="ch-demo-pz"></canvas></div>
+          </div>
+          <div class="span-7 demo-stack">
+            <div class="ch-frame demo-bode"><canvas data-testid="ch-demo-bode-mag"></canvas></div>
+            <div class="ch-frame demo-bode"><canvas data-testid="ch-demo-bode-phase"></canvas></div>
+          </div>
+          <div class="span-5 demo-stack">
+            <div class="ch-frame demo-pz"><canvas data-testid="ch-demo-phase"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-card span-6" aria-labelledby="t-cobweb">
+        <h2 id="t-cobweb">Telaraña del mercado</h2>
+        <p class="demo-note">P(k+1) = (a − c − d·P(k))/b con a = 10, b = 1, c = 1, d = 0.8: converge a P* = 5.</p>
+        <div class="ch-frame demo-pz"><canvas data-testid="ch-demo-cobweb"></canvas></div>
+      </section>
+
+      <section class="demo-card span-6" aria-labelledby="t-stems">
+        <h2 id="t-stems">Secuencia discreta</h2>
+        <p class="demo-note">El mismo precio como tallos en función del periodo k.</p>
+        <div class="ch-frame demo-pz"><canvas data-testid="ch-demo-stems"></canvas></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="../../vendor/chart.js/chart.umd.min.js"></script>
+  <script src="../../js/core/ns.js"></script>
+  <script src="../../js/ui/icons-data.js"></script>
+  <script src="../../js/viz/charts.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var DSL = window.DSL;
+      var charts = DSL.viz.charts;
+      var $ = function (sel) { return document.querySelector(sel); };
+
+      /* ---------- modelo de segundo orden (cerrado, determinista) */
+      function linspace(a, b, n) {
+        var out = new Array(n);
+        for (var i = 0; i < n; i++) out[i] = a + ((b - a) * i) / (n - 1);
+        return out;
+      }
+
+      function system(zeta, wn, a) {
+        var sig = zeta * wn;
+        var poles;
+        var kind;
+        if (Math.abs(zeta - 1) < 1e-9) { kind = 'crit'; poles = [{ re: -wn, im: 0 }, { re: -wn, im: 0 }]; }
+        else if (zeta < 1) { kind = 'sub'; var wd = wn * Math.sqrt(1 - zeta * zeta); poles = [{ re: -sig, im: wd }, { re: -sig, im: -wd }]; }
+        else { kind = 'sobre'; var r = wn * Math.sqrt(zeta * zeta - 1); poles = [{ re: -sig + r, im: 0 }, { re: -sig - r, im: 0 }]; }
+        function y0(t) {
+          if (kind === 'sub') { var wd = wn * Math.sqrt(1 - zeta * zeta); return 1 - Math.exp(-sig * t) * (Math.cos(wd * t) + (sig / wd) * Math.sin(wd * t)); }
+          if (kind === 'crit') return 1 - Math.exp(-wn * t) * (1 + wn * t);
+          var p1 = poles[0].re, p2 = poles[1].re;
+          return 1 + (p2 * Math.exp(p1 * t) - p1 * Math.exp(p2 * t)) / (p1 - p2);
+        }
+        function h0(t) {
+          if (kind === 'sub') { var wd = wn * Math.sqrt(1 - zeta * zeta); return (wn * wn / wd) * Math.exp(-sig * t) * Math.sin(wd * t); }
+          if (kind === 'crit') return wn * wn * t * Math.exp(-wn * t);
+          var p1 = poles[0].re, p2 = poles[1].re;
+          return (wn * wn * (Math.exp(p1 * t) - Math.exp(p2 * t))) / (p1 - p2);
+        }
+        var y = a ? function (t) { return y0(t) + h0(t) / a; } : y0;
+        var slowest = Math.min.apply(null, poles.map(function (p) { return Math.abs(p.re); }));
+        var tEnd = Math.min(40, Math.max(2, 6 / slowest));
+        var t = linspace(0, tEnd, 400);
+        var ys = t.map(y);
+        // Métricas sobre una malla fina.
+        var tf = linspace(0, tEnd, 4000);
+        var yf = tf.map(y);
+        var pk = 0;
+        for (var i = 1; i < yf.length; i++) if (yf[i] > yf[pk]) pk = i;
+        var ts = 0;
+        for (var j = yf.length - 1; j >= 0; j--) if (Math.abs(yf[j] - 1) > 0.02) { ts = tf[Math.min(j + 1, tf.length - 1)]; break; }
+        function cross(level) {
+          for (var k = 1; k < yf.length; k++) if (yf[k - 1] < level && yf[k] >= level) return tf[k - 1] + (tf[k] - tf[k - 1]) * (level - yf[k - 1]) / (yf[k] - yf[k - 1]);
+          return null;
+        }
+        var info = {
+          finalValue: 1,
+          peak: yf[pk], peakTime: tf[pk],
+          overshootPct: Math.max(0, (yf[pk] - 1) * 100),
+          settlingTime: ts,
+          riseTimes: { t10: cross(0.1), t90: cross(0.9) },
+          settleBand: 0.02,
+        };
+        // Bode analítico.
+        var mags = [Math.abs(wn)].concat(a ? [a] : []);
+        var w = linspace(Math.log10(Math.min.apply(null, mags) / 100), Math.log10(Math.max.apply(null, mags) * 100), 300).map(function (e) { return Math.pow(10, e); });
+        var magDb = w.map(function (om) {
+          var dr = wn * wn - om * om, di = 2 * zeta * wn * om;
+          var num = a ? (wn * wn / a) * Math.hypot(om, a) : wn * wn;
+          return 20 * Math.log10(num / Math.hypot(dr, di));
+        });
+        var phaseDeg = w.map(function (om) {
+          var ph = -Math.atan2(2 * zeta * wn * om, wn * wn - om * om);
+          if (a) ph += Math.atan2(om, a);
+          return (ph * 180) / Math.PI;
+        });
+        return {
+          t: t, y: ys, info: info, poles: poles, zeros: a ? [{ re: -a, im: 0 }] : [],
+          bode: { omega: w, magDb: magDb, phaseDeg: phaseDeg },
+          portrait: t.map(function (tt) {
+            var e = 1e-5, t0 = Math.max(0, tt - e);
+            return { x: y(tt), y: (y(tt + e) - y(t0)) / (tt + e - t0) };
+          }),
+        };
+      }
+
+      /* ---------- gráficas */
+      var h = {};
+      h.time = charts.createTimeChart($('[data-testid="ch-demo-time"]'), {
+        ariaLabel: 'Masa-resorte: posición y velocidad',
+        series: [
+          { key: 'x', label: 'Posición x', color: '--c-out', unit: 'm' },
+          { key: 'v', label: 'Velocidad v', color: '--c-zero', unit: 'm/s' },
+        ],
+        yLabel: 'Estado',
+        window: 10,
+        dataToggle: true,
+        testid: 'ch-demo-time',
+      });
+      h.step = charts.createStepChart($('[data-testid="ch-demo-step"]'), { ariaLabel: 'Respuesta al escalón', dataToggle: true, testid: 'ch-demo-step' });
+      h.pz = charts.createPoleZeroChart($('[data-testid="ch-demo-pz"]'), { ariaLabel: 'Mapa de polos y ceros', dataToggle: true, testid: 'ch-demo-pz' });
+      h.bode = charts.createBodeChart($('[data-testid="ch-demo-bode-mag"]'), $('[data-testid="ch-demo-bode-phase"]'), {
+        ariaLabel: 'Diagrama de Bode', markers: { minus3dB: true, crossover: true }, dataToggle: true, testid: 'ch-demo-bode',
+      });
+      h.phase = charts.createXYChart($('[data-testid="ch-demo-phase"]'), {
+        ariaLabel: 'Retrato de fase', xLabel: 'Salida y', yLabel: 'Derivada dy/dt (1/s)', testid: 'ch-demo-phase',
+      });
+      h.cobweb = charts.createXYChart($('[data-testid="ch-demo-cobweb"]'), {
+        ariaLabel: 'Telaraña del precio', xLabel: 'Precio P(k)', yLabel: 'Precio P(k+1)', aspect: 'equal', xRange: [0, 10], yRange: [0, 10], testid: 'ch-demo-cobweb',
+      });
+      h.stems = charts.createXYChart($('[data-testid="ch-demo-stems"]'), {
+        ariaLabel: 'Precio por periodo', xLabel: 'Periodo k', yLabel: 'Precio P', dataToggle: true, testid: 'ch-demo-stems',
+      });
+
+      /* ---------- parámetros de la función de transferencia */
+      var params = { zeta: 0.35, wn: 2, a: 3, zero: true };
+      var pendingMode = null;
+      var rafId = 0;
+      function apply(mode) {
+        var s = system(params.zeta, params.wn, params.zero ? params.a : null);
+        h.step.update([{ key: 'y', label: 'Respuesta y(t)', t: s.t, y: s.y, color: '--c-out' }], { annotations: s.info, mode: mode });
+        h.pz.update({ poles: s.poles, zeros: s.zeros }, { mode: mode });
+        h.bode.update(s.bode, { mode: mode });
+        h.phase.update([{ key: 'tray', label: 'Trayectoria (y, dy/dt)', kind: 'line', points: s.portrait, color: '--c-out', endMarker: true }], { mode: mode });
+        return s;
+      }
+      function schedule(mode) {
+        pendingMode = pendingMode === 'release' ? 'release' : mode;
+        if (rafId) return;
+        rafId = requestAnimationFrame(function () { rafId = 0; var m = pendingMode; pendingMode = null; apply(m); });
+      }
+      [['zeta', 'i-zeta', 'o-zeta'], ['wn', 'i-wn', 'o-wn'], ['a', 'i-a', 'o-a']].forEach(function (f) {
+        var input = document.getElementById(f[1]);
+        var out = document.getElementById(f[2]);
+        input.addEventListener('input', function () { params[f[0]] = Number(input.value); out.textContent = DSL.util.formatNumber(params[f[0]], 3); schedule('drag'); });
+        input.addEventListener('change', function () { schedule('release'); });
+      });
+      document.getElementById('i-zero').addEventListener('change', function (e) { params.zero = e.target.checked; schedule('release'); });
+
+      /* ---------- mercado: telaraña y tallos */
+      function market(P0, n) {
+        var a = 10, b = 1, c = 1, d = 0.8;
+        var P = [P0];
+        for (var k = 0; k < n; k++) P.push((a - c - d * P[k]) / b);
+        var seg = [];
+        for (var i = 0; i + 1 < P.length; i++) {
+          seg.push({ x: P[i], y: P[i] }, { x: P[i], y: P[i + 1] });
+          seg.push({ x: P[i], y: P[i + 1] }, { x: P[i + 1], y: P[i + 1] });
+        }
+        return { P: P, seg: seg, star: (a - c) / (b + d) };
+      }
+      var mk = market(8, 14);
+      h.cobweb.update([
+        { key: 'id', label: 'Identidad P(k+1) = P(k)', kind: 'line', points: [{ x: 0, y: 0 }, { x: 10, y: 10 }], color: '--c-in', dash: true },
+        { key: 'map', label: 'Ajuste del mercado', kind: 'line', points: [{ x: 0, y: 9 }, { x: 10, y: 1 }], color: '--c-out' },
+        { key: 'web', label: 'Telaraña', kind: 'segments', points: mk.seg, color: '--c-state' },
+      ]);
+      h.stems.update([
+        { key: 'P', label: 'Precio P(k)', kind: 'stems', points: mk.P.map(function (p, k) { return { x: k, y: p }; }), color: '--c-out' },
+        { key: 'star', label: 'Equilibrio P*', kind: 'line', points: [{ x: 0, y: mk.star }, { x: mk.P.length - 1, y: mk.star }], color: '--c-in', dash: true },
+      ]);
+
+      /* ---------- serie temporal: precarga determinista y streaming opcional */
+      var oscY = function (t) {
+        var s = 0.15 * 2.5, wd = 2.5 * Math.sqrt(1 - 0.15 * 0.15);
+        return 1 - Math.exp(-s * t) * (Math.cos(wd * t) + (s / wd) * Math.sin(wd * t));
+      };
+      var oscV = function (t) {
+        var s = 0.15 * 2.5, wd = 2.5 * Math.sqrt(1 - 0.15 * 0.15);
+        return (2.5 * 2.5 / wd) * Math.exp(-s * t) * Math.sin(wd * t);
+      };
+      var simT = 0;
+      function streamTo(tEnd, dt) {
+        dt = dt || 1 / 60;
+        while (simT <= tEnd + 1e-9) {
+          h.time.push(simT, { x: oscY(simT), v: oscV(simT) });
+          simT += dt;
+        }
+      }
+      streamTo(7);
+      var live = DSL.util.loop(function (dt) { streamTo(simT + dt); }, { element: $('[data-testid="ch-demo-time"]').closest('.ch-frame') });
+      var btnStream = document.getElementById('btn-stream');
+      btnStream.addEventListener('click', function () {
+        live.toggle();
+        btnStream.textContent = live.isRunning() ? 'Pausar' : 'Reproducir';
+      });
+      var btnTheme = document.getElementById('btn-theme');
+      function syncThemeLabel() { btnTheme.textContent = DSL.prefs.theme === 'dark' ? 'Tema claro' : 'Tema oscuro'; }
+      btnTheme.addEventListener('click', function () { DSL.prefs.toggleTheme(); syncThemeLabel(); });
+      DSL.bus.on('theme:change', syncThemeLabel);
+
+      apply('release');
+
+      window.__demo = {
+        h: h,
+        params: params,
+        system: system,
+        apply: function (p, mode) { Object.assign(params, p || {}); return apply(mode || 'release'); },
+        streamTo: streamTo,
+        simT: function () { return simT; },
+        market: market,
+        live: live,
+      };
+      var done = function () { document.documentElement.setAttribute('data-ready', 'true'); };
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(done, done);
+      else done();
+    })();
+  </script>
+</body>
+</html>

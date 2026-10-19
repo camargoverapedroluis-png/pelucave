@@ -1,0 +1,18 @@
+# tools/icons/design-system.list — Propietario: design-system.
+# Iconos que usan js/ui/components.js, js/ui/shell.js, js/app.js y la página de pruebas del sistema de diseño.
+# Un nombre de Lucide por línea. Tras editar: node tools/icons.mjs
+arrow-right
+arrow-up
+check
+chevron-down
+circle-alert
+circle-check
+circle-help
+info
+menu
+moon
+rotate-ccw
+sliders-horizontal
+sun
+triangle-alert
+x

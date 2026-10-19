@@ -1,0 +1,9 @@
+# tools/icons/systems.list — Propietario: systems.
+# Iconos de los modelos (campo «icon» de cada modelo en js/systems/*.js).
+# Un nombre de Lucide por línea. Tras editar: node tools/icons.mjs
+activity
+droplets
+zap
+virus
+trending-up-down
+metronome

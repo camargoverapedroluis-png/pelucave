@@ -1,0 +1,388 @@
+/*
+ * css/tokens.css — Nombres: architect (CONGELADOS). Valores: design-system (ajustables; se pueden AÑADIR tokens).
+ * Única hoja con colores literales. El resto del CSS usa solo var(--…).
+ * Idea visual (docs/SKILLS_BRIEF.md §1): «el plano s de noche». API y ganchos: docs/api/ui.md.
+ *
+ * Puntos de corte (las media queries no admiten var(); úsense estos valores literales):
+ *   teléfono  < 768px            → @media (max-width: 767.98px)
+ *   tableta   768px – 1279px     → @media (min-width: 768px) and (max-width: 1279.98px)
+ *   escritorio ≥ 1280px          → @media (min-width: 1280px)
+ *   ancho     ≥ 1600px           → @media (min-width: 1600px)
+ *
+ * Capas en cascada: cada hoja envuelve sus reglas en su capa. Una capa posterior gana a una
+ * anterior sin pelear por especificidad. Los tokens (custom properties en :root) van sin capa.
+ *
+ * Los temas se aplican con [data-theme] en <html>, pero también en cualquier subárbol
+ * (<div data-theme="light">): la página de pruebas muestra ambos temas lado a lado.
+ */
+@layer reset, base, components, shell, charts, scenes, sections, overrides;
+
+/* ===================================================================== TEMA OSCURO (por defecto) */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ---------- Fondos y superficies (escalones de tono: la profundidad no usa sombras) */
+  --bg: #0F1823;                    /* fondo de página: pizarra azulada profunda, no negro */
+  --bg-lift: #172638;               /* luz tonal del fondo alrededor del origen del plano s */
+  --bg-grid: #E6EDF30A;             /* reglado menor del plano s de fondo */
+  --bg-grid-major: #E6EDF311;       /* reglado mayor (cada 5 divisiones) */
+  --bg-grid-axis: #E6EDF324;        /* ejes Re / jω del fondo */
+  --surface-1: #162231;             /* paneles; respaldo sólido del vidrio */
+  --surface-2: #1D2B3D;             /* elevado: popovers, paso activo, pestaña seleccionada */
+  --surface-3: #26374C;             /* pistas de slider, campos, relleno al pasar el puntero */
+  --surface-inset: #111C29;         /* huecos: campos de texto, carriles de controles segmentados */
+
+  /* ---------- Vidrio en tres niveles (SKILLS_BRIEF §1 «Depth and glass») */
+  /* Nivel A: desenfoque real, solo capas fijas o superpuestas (barra, dock, diálogos, tooltips). */
+  --glass-a-bg: rgb(22 34 49 / 0.72);
+  --glass-a-border: rgb(230 237 243 / 0.10);
+  --glass-a-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --glass-blur-bar: 14px;           /* barra superior fija */
+  --glass-blur-dock: 14px;          /* dock de controles de simulación */
+  --glass-blur-overlay: 20px;       /* diálogos y hoja «Menú» */
+  --glass-blur-tip: 8px;            /* tooltips y popovers */
+  /* Nivel B: escarchado sin desenfoque (paneles de contenido, tarjetas, derivación). */
+  --glass-b-bg: rgb(22 34 49 / 0.62);
+  --glass-b-border: rgb(230 237 243 / 0.09);
+  --glass-b-highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --glass-b-hover: rgb(29 43 61 / 0.78);   /* paso de tono al pasar el puntero (no se eleva) */
+  /* Nivel C: sólido (áreas de trazado y canvas de simulación: los datos nunca van sobre desenfoque). */
+  --glass-c-bg: #132030;
+  /* Respaldo sólido (prefers-reduced-transparency o sin backdrop-filter). */
+  --glass-fallback-bg: #162231;
+
+  /* ---------- Textura del fondo (grano estático, una baldosa SVG rasterizada una vez) */
+  --grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxODAnIGhlaWdodD0nMTgwJz48ZmlsdGVyIGlkPSdnJyB4PScwJyB5PScwJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMycgc2VlZD0nNycgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0nMCAwIDAgMCAxIDAgMCAwIDAgMSAwIDAgMCAwIDEgMS42IDAgMCAwIC0wLjYyJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzE4MCcgaGVpZ2h0PScxODAnIGZpbHRlcj0ndXJsKCNnKScvPjwvc3ZnPg==");
+  --grain-opacity: 0.07;
+  --scrim: rgb(8 13 20 / 0.58);     /* velo bajo la hoja «Menú» */
+  --mask-fill: #000;                /* relleno opaco para mask-image (solo importa el alfa) */
+
+  /* ---------- Bordes */
+  --line: rgb(230 237 243 / 0.10);  /* borde de 1px, divisores */
+  --line-strong: rgb(230 237 243 / 0.18);
+  --line-focus: #E3B25C;
+
+  /* ---------- Texto */
+  --ink: #E6EDF3;                   /* texto principal (15.1:1 sobre --bg) */
+  --muted: #9AABBD;                 /* secundario, marcas de ejes (7.6:1) */
+  --subtle: #8195AA;                /* terciario, placeholders (≥ 4.5:1 sobre --surface-2) */
+  --ink-disabled: #6A7D91;
+  --ink-inverse: #0F1823;
+
+  /* ---------- Acento (acción principal, estado activo, anillo de foco; < 5 % de la pantalla) */
+  --accent: #E3B25C;
+  --accent-ink: #1B1405;            /* texto sobre el acento (9.4:1) */
+  --accent-hover: #EBC27A;
+  --accent-press: #D6A24A;
+  --accent-soft: rgb(227 178 92 / 0.14);   /* fondo de selección */
+  --accent-line: rgb(227 178 92 / 0.45);
+
+  /* ---------- Semánticos (siempre con icono y texto, nunca solo color) */
+  --success: #8BD3A0;
+  --success-soft: rgb(139 211 160 / 0.14);
+  --warning: #F0B87A;
+  --warning-soft: rgb(240 184 122 / 0.14);
+  --danger: #EC9088;
+  --danger-soft: rgb(236 144 136 / 0.14);
+  --info: #86C3EA;
+  --info-soft: rgb(134 195 234 / 0.14);
+
+  /* ---------- Colores de datos (un concepto = un tono en todas las gráficas).
+     Solo #RRGGBB o #RRGGBBAA: los leen canvas y Chart.js. */
+  --c-in: #B8C4D1;                  /* entrada u(t), referencia, asíntotas, y∞ (discontinua) */
+  --c-out: #86C3EA;                 /* salida y(t), |G(jω)|, ∠G(jω), primera variable de estado */
+  --c-state: #BBA8E8;               /* estado x(t) cuando no es la salida */
+  --c-pole: #EC9088;                /* polos × */
+  --c-zero: #6DD4B8;                /* ceros ○, segunda variable de estado */
+  --c-ghost: #E6EDF359;             /* curva fantasma neutra (35 %) */
+  --c-grid: #E6EDF314;              /* rejilla de gráficas (≈ 8 %) */
+  --c-axis: #E6EDF352;              /* ejes de gráficas (≈ 32 %) */
+  --c-plot-bg: #132030;             /* fondo del área de trazado (nivel C) */
+  --c-stable-region: #6DD4B80F;     /* semiplano izquierdo (estable) */
+  --c-unstable-region: #EC908812;   /* semiplano derecho (inestable) */
+  --c-series-1: #86C3EA;
+  --c-series-2: #6DD4B8;
+  --c-series-3: #EC9088;
+  --c-series-4: #BBA8E8;
+  --c-series-5: #E9A8C9;
+  --c-series-6: #C9D58A;
+  --ghost-opacity: 0.35;            /* opacidad de la curva anterior tras un cambio */
+  --chart-line-width: 2;            /* px; número para Chart.js */
+  --chart-ref-line-width: 1.25;     /* px; referencias y asíntotas */
+  --chart-ref-dash: 6 4;            /* patrón de discontinua de referencias */
+  --chart-marker-size: 10;          /* px; × de polos y ○ de ceros */
+
+  /* ---------- Sombras y brillos (solo superposiciones; las tarjetas en reposo no llevan sombra) */
+  --shadow-popover: 0 8px 24px rgb(4 9 15 / 0.40), 0 1px 3px rgb(4 9 15 / 0.30);
+  --shadow-overlay: 0 24px 64px rgb(4 9 15 / 0.55), 0 2px 8px rgb(4 9 15 / 0.35);
+  --shadow-dock: 0 12px 32px rgb(4 9 15 / 0.45);
+  --glow-focus: 0 0 0 4px rgb(227 178 92 / 0.22);
+  --glow-data: 0 0 18px;            /* se completa con un color de datos: box-shadow: var(--glow-data) var(--c-out) */
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+  --spotlight: rgb(230 237 243 / 0.05);    /* reflejo que sigue al puntero en tarjetas con data-spotlight */
+  --spotlight-edge: rgb(227 178 92 / 0.38);
+}
+
+/* ===================================================================== TEMA CLARO (reasignación de tokens) */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #EEF2F6;
+  --bg-lift: #F8FAFC;
+  --bg-grid: #10203009;
+  --bg-grid-major: #1020300F;
+  --bg-grid-axis: #1020301F;
+  --surface-1: #FFFFFF;
+  --surface-2: #F5F8FB;
+  --surface-3: #E2E8EF;
+  --surface-inset: #E8EDF2;
+
+  --glass-a-bg: rgb(255 255 255 / 0.76);
+  --glass-a-border: rgb(16 32 48 / 0.10);
+  --glass-a-highlight: inset 0 1px 0 rgb(255 255 255 / 0.70);
+  --glass-b-bg: rgb(255 255 255 / 0.72);
+  --glass-b-border: rgb(16 32 48 / 0.10);
+  --glass-b-highlight: inset 0 1px 0 rgb(255 255 255 / 0.70);
+  --glass-b-hover: rgb(255 255 255 / 0.94);
+  --glass-c-bg: #FFFFFF;
+  --glass-fallback-bg: #FFFFFF;
+
+  --grain: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxODAnIGhlaWdodD0nMTgwJz48ZmlsdGVyIGlkPSdnJyB4PScwJyB5PScwJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMycgc2VlZD0nNycgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0nMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMS42IDAgMCAwIC0wLjYyJy8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzE4MCcgaGVpZ2h0PScxODAnIGZpbHRlcj0ndXJsKCNnKScvPjwvc3ZnPg==");
+  --grain-opacity: 0.045;
+  --scrim: rgb(16 32 48 / 0.28);
+
+  --line: rgb(16 32 48 / 0.12);
+  --line-strong: rgb(16 32 48 / 0.22);
+  --line-focus: #8A5A00;
+
+  --ink: #102030;
+  --muted: #4A5A6C;
+  --subtle: #56667A;
+  --ink-disabled: #8A98A8;
+  --ink-inverse: #FFFFFF;
+
+  --accent: #8A5A00;
+  --accent-ink: #FFFFFF;
+  --accent-hover: #744B00;
+  --accent-press: #5F3D00;
+  --accent-soft: rgb(138 90 0 / 0.10);
+  --accent-line: rgb(138 90 0 / 0.40);
+
+  --success: #1F7A45;
+  --success-soft: rgb(31 122 69 / 0.10);
+  --warning: #9A5B12;
+  --warning-soft: rgb(154 91 18 / 0.10);
+  --danger: #B8433A;
+  --danger-soft: rgb(184 67 58 / 0.10);
+  --info: #1C6EA4;
+  --info-soft: rgb(28 110 164 / 0.10);
+
+  --c-in: #5E6E80;
+  --c-out: #1C6EA4;
+  --c-state: #6B55B5;
+  --c-pole: #B8433A;
+  --c-zero: #0E7F66;
+  --c-ghost: #10203059;
+  --c-grid: #1020301A;
+  --c-axis: #10203066;
+  --c-plot-bg: #FFFFFF;
+  --c-stable-region: #0E7F660F;
+  --c-unstable-region: #B8433A10;
+  --c-series-1: #1C6EA4;
+  --c-series-2: #0E7F66;
+  --c-series-3: #B8433A;
+  --c-series-4: #6B55B5;
+  --c-series-5: #A83F78;
+  --c-series-6: #6B7A1F;
+
+  --shadow-popover: 0 8px 24px rgb(16 32 48 / 0.14), 0 1px 3px rgb(16 32 48 / 0.10);
+  --shadow-overlay: 0 24px 64px rgb(16 32 48 / 0.20), 0 2px 8px rgb(16 32 48 / 0.12);
+  --shadow-dock: 0 12px 32px rgb(16 32 48 / 0.16);
+  --glow-focus: 0 0 0 4px rgb(138 90 0 / 0.18);
+  --spotlight: rgb(16 32 48 / 0.035);
+  --spotlight-edge: rgb(138 90 0 / 0.32);
+}
+
+/* ===================================================================== TOKENS COMUNES A AMBOS TEMAS */
+:root {
+  /* ---------- Tipografía (SKILLS_BRIEF §1 «Typography») */
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-numeric: tabular-nums;     /* font-variant-numeric de toda lectura numérica */
+
+  /* Escala modular (1rem = 16px). Nada por debajo de 13px. */
+  --text-xs: 0.8125rem;             /* 13px: marcas de ejes, notas al pie */
+  --text-sm: 0.875rem;              /* 14px: etiquetas, controles densos */
+  --text-base: 1.0625rem;           /* 17px: cuerpo */
+  --text-lg: 1.5rem;                /* 24px: títulos de tarjeta/paso (display a partir de aquí) */
+  --text-xl: 2.25rem;               /* 36px: títulos de sección */
+  --text-display: clamp(3rem, 5.5vw, 4.5rem); /* 48–72px: titular del inicio */
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-display: 640;                /* Bricolage variable: entre semibold y bold */
+
+  --lh-display: 1.0;
+  --lh-heading: 1.12;
+  --lh-ui: 1.35;
+  --lh-body: 1.55;
+  --tracking-display: -0.03em;
+  --tracking-heading: -0.018em;
+  --measure: 72ch;                  /* longitud máxima de línea del cuerpo */
+
+  /* ---------- Espaciado (base 4px) */
+  --space-1: 0.25rem;               /* 4 */
+  --space-2: 0.5rem;                /* 8 */
+  --space-3: 0.75rem;               /* 12 */
+  --space-4: 1rem;                  /* 16 */
+  --space-5: 1.5rem;                /* 24 */
+  --space-6: 2rem;                  /* 32 */
+  --space-7: 3rem;                  /* 48 */
+  --space-8: 4rem;                  /* 64 */
+  --space-9: 6rem;                  /* 96 */
+  --space-10: 8rem;                 /* 128 */
+  --gutter: clamp(16px, 4vw, 32px); /* márgenes laterales de página */
+  --grid-columns: 12;
+  --grid-gap: var(--space-5);
+  --section-gap: var(--space-9);    /* separación entre secciones ≥ 2× la interna */
+  --section-pad: clamp(4rem, 7vw, 6.5rem);   /* relleno vertical de cada sección (64–104px) */
+  --container-max: 1360px;
+  --header-h: 64px;                 /* alto de la barra fija; scroll-margin-top de las secciones */
+
+  /* ---------- Controles */
+  --control-h: 44px;                /* objetivo táctil mínimo */
+  --control-h-sm: 36px;             /* solo con puntero fino; con puntero táctil pasa a 44px */
+  --icon-size: 20px;
+  --icon-size-sm: 18px;
+  --icon-stroke: 1.75;
+  --slider-thumb: 18px;
+  --slider-rail: 4px;
+  --tip-max: 18rem;                 /* ancho máximo de los tooltips */
+
+  /* ---------- Radios */
+  --radius-sm: 6px;                 /* botones, campos, chips */
+  --radius-md: 12px;                /* paneles, tarjetas */
+  --radius-lg: 20px;                /* diálogos, canvas del inicio */
+  --radius-pill: 999px;
+
+  /* ---------- Movimiento (SKILLS_BRIEF §1 «Motion») */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* entradas */
+  --ease-move: cubic-bezier(0.76, 0, 0.24, 1);     /* desplazamientos por la pantalla */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);         /* salidas ≤ 150ms */
+  --ease-tab: cubic-bezier(0.5, 0, 0.2, 1);        /* indicador de pestaña */
+  --ease-linear: linear;                           /* solo recorrido constante */
+
+  --dur-press: 120ms;               /* pulsación (scale .97) */
+  --dur-fast: 150ms;                /* cambio de pestaña (fundido), salidas */
+  --dur-hover: 180ms;               /* hover (solo @media (hover: hover)) */
+  --dur-toggle: 180ms;              /* conmutadores, plegar/desplegar */
+  --dur-tab: 220ms;                 /* indicador deslizante de pestaña */
+  --dur-step-in: 250ms;             /* paso del asistente / línea de derivación (entrada) */
+  --dur-step-out: 150ms;            /* … (salida) */
+  --dur-popover-in: 200ms;
+  --dur-popover-out: 140ms;
+  --dur-overlay-in: 320ms;          /* diálogos y hojas */
+  --dur-overlay-out: 220ms;
+  --dur-morph-drag: 120ms;          /* gráfica mientras se arrastra un slider */
+  --dur-morph: 300ms;               /* gráfica al soltar */
+  --dur-highlight: 400ms;           /* resaltado de términos afectados */
+  --dur-icon-swap: 120ms;           /* fundido del icono Reproducir/Pausar */
+  --dur-reveal: 380ms;              /* aparición única al entrar en pantalla (DSL.ui.reveal) */
+  --dur-load: 700ms;                /* secuencia de carga del inicio (total, una vez) */
+  --stagger: 70ms;
+  --travel-rise: 20px;              /* elevación de la secuencia de carga */
+  --travel-step: 24px;              /* deslizamiento direccional de pasos ordenados */
+  --travel-pop: 6px;                /* desplazamiento corto de popovers, tooltips y avisos */
+  --press-scale: 0.97;
+  --enter-scale: 0.97;              /* nunca scale(0) */
+
+  /* ---------- Capas (z-index) */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-dock: 20;
+  --z-header: 100;
+  --z-sheet: 200;
+  --z-popover: 300;
+  --z-tooltip: 400;
+  --z-toast: 500;
+  --z-skip: 1000;
+}
+
+/* Teléfono: barra algo más baja. */
+@media (max-width: 767.98px) {
+  :root {
+    --header-h: 56px;
+  }
+}
+
+/* Puntero táctil: los controles densos recuperan el objetivo de 44px. */
+@media (pointer: coarse) {
+  :root {
+    --control-h-sm: 44px;
+  }
+}
+
+/* ===================================================================== PREFERENCIAS DEL SISTEMA */
+
+/* Transparencia reducida o sin backdrop-filter: el vidrio pasa a sólido y sin desenfoque. */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  [data-theme="dark"],
+  [data-theme="light"] {
+    --glass-a-bg: var(--glass-fallback-bg);
+    --glass-b-bg: var(--glass-fallback-bg);
+    --glass-b-hover: var(--surface-2);
+    --glass-blur-bar: 0px;
+    --glass-blur-dock: 0px;
+    --glass-blur-overlay: 0px;
+    --glass-blur-tip: 0px;
+    --grain-opacity: 0;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root,
+  [data-theme="dark"],
+  [data-theme="light"] {
+    --glass-a-bg: var(--glass-fallback-bg);
+    --glass-blur-bar: 0px;
+    --glass-blur-dock: 0px;
+    --glass-blur-overlay: 0px;
+    --glass-blur-tip: 0px;
+  }
+}
+
+/* Movimiento reducido: se conservan opacidad y color; desaparecen recorridos y escalas.
+   [data-motion="reduce"] en <html> lo fija DSL.ui.init() cuando DSL.prefs.setReducedMotion(true) lo fuerza. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --travel-rise: 0px;
+    --travel-step: 0px;
+    --travel-pop: 0px;
+    --press-scale: 1;
+    --enter-scale: 1;
+    --dur-morph-drag: 0ms;
+    --dur-morph: 0ms;
+    --dur-tab: 0ms;
+    --dur-load: 0ms;
+    --stagger: 0ms;
+  }
+}
+
+:root[data-motion="reduce"] {
+  --travel-rise: 0px;
+  --travel-step: 0px;
+  --travel-pop: 0px;
+  --press-scale: 1;
+  --enter-scale: 1;
+  --dur-morph-drag: 0ms;
+  --dur-morph: 0ms;
+  --dur-tab: 0ms;
+  --dur-load: 0ms;
+  --stagger: 0ms;
+}

@@ -1,0 +1,539 @@
+/*
+ * css/sections/concepts.css — Propietario: hero-concepts.
+ * Sección #conceptos (prefijo cc-): cuatro tarjetas de nivel B (.ds-card) con figuras vivas.
+ * Reglas dentro de @layer sections. Solo tokens de css/tokens.css (sin colores literales).
+ *
+ *   ≥ 1200px  [ a ······· 7 ][ b ··· 5 ]      < 1200px  [ a ········· 12 ]
+ *             [ c ·········· 12 ·········· ]             [ b ········· 12 ]
+ *             [ d ·········· 12 ·········· ]             [ c ········· 12 ]
+ *                                                        [ d ········· 12 ]
+ *   Dentro de cada tarjeta, a partir de 820px (700px en «tiempo»), texto y controles a la izquierda y
+ *   la figura a la derecha. Las gráficas y los lienzos reservan su geometría final antes de prepararse.
+ */
+@layer sections {
+  .cc {
+    container: cc / inline-size;
+    min-width: 0;
+  }
+
+  .cc-head {
+    max-width: var(--measure);
+    margin-bottom: var(--space-7);
+  }
+  /* Entradilla con el mismo cuerpo, color e interlineado que las de las demás secciones (.gl-lead). */
+  .cc-lead {
+    margin-top: var(--space-3);
+    color: var(--muted);
+    font-size: var(--text-base);
+    line-height: var(--lh-body);
+  }
+
+  .cc-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--grid-gap);
+    align-items: stretch;
+  }
+  .cc-card {
+    container: cc-card / inline-size;
+    grid-column: span 12;
+    gap: var(--space-4);
+    scroll-margin-top: calc(var(--header-h) + var(--space-4));
+    transition:
+      border-color var(--dur-highlight) var(--ease-out),
+      box-shadow var(--dur-highlight) var(--ease-out),
+      background-color var(--dur-hover) var(--ease-out);
+  }
+  .cc-card:focus {
+    outline: none;
+  }
+  .cc-card.is-highlight {
+    border-color: var(--accent);
+    box-shadow: var(--glass-b-highlight), 0 0 0 1px var(--accent-line), var(--glow-focus);
+  }
+
+  /* Entre 900 y 1199px «tiempo» y «ecuaciones» ocupan la fila entera (12): ninguna se estira junto a la
+     otra ni deja un hueco al pie. */
+  @container cc (min-width: 1200px) {
+    .cc-card--sistema { grid-column: span 7; }
+    .cc-card--tiempo { grid-column: span 5; }
+    .cc-card--ecuaciones { grid-column: span 12; }
+  }
+
+  /* Título de tarjeta = tamaño de título de tarjeta (24px); el h2 de la sección mantiene 36px. */
+  .cc-card__title {
+    font-size: var(--text-lg);
+    line-height: var(--lh-heading);
+    text-wrap: balance;
+  }
+  .cc-card__title > .ds-math {
+    font-size: 1em;
+  }
+
+  /* ---------------------------------------------------------------- cuerpo de tarjeta */
+  .cc-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "text" "fig" "eqs" "side";
+    gap: var(--space-5);
+    flex: 1;
+    align-content: start;
+    color: var(--ink);
+  }
+  .cc-body--ecuaciones {
+    grid-template-areas: "text" "eqs" "side" "fig" "out";
+  }
+
+  .cc-body--linealidad {
+    grid-template-areas: "text" "tabs";
+  }
+  .cc-text {
+    grid-area: text;
+    display: grid;
+    gap: var(--space-3);
+    max-width: var(--measure);
+  }
+  .cc-fig {
+    grid-area: fig;
+    container: cc-fig / inline-size;
+    min-width: 0;
+  }
+  .cc-eqs {
+    grid-area: eqs;
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+    min-width: 0;
+  }
+  .cc-out {
+    grid-area: out;
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+    min-width: 0;
+  }
+  .cc-side {
+    grid-area: side;
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+    min-width: 0;
+  }
+  .cc-body--linealidad > .ds-tabs {
+    grid-area: tabs;
+    min-width: 0;
+  }
+
+  .cc-def {
+    padding-left: var(--space-4);
+    box-shadow: inset 2px 0 0 var(--accent);
+    font-size: var(--text-lg);
+    line-height: 1.45;
+  }
+  .cc-eq {
+    padding-block: var(--space-1);
+  }
+  .cc-eqrow {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .cc-eqrow__label,
+  .cc-seg-label {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+  }
+  .cc-note,
+  .cc-hint {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+
+  .cc-controls {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .cc-cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .cc-seg-row {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+    min-width: 0;
+  }
+  .cc-readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: var(--space-3);
+  }
+  .cc-readouts--stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cc-time-controls {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: var(--space-4);
+  }
+
+  .cc-callout > p {
+    min-width: 0;
+  }
+  .cc-callout__icon {
+    display: inline-flex;
+    flex: none;
+    margin-top: 1px;
+    color: var(--callout-fg);
+  }
+  .cc-callout__title {
+    color: var(--ink);
+    font-weight: var(--fw-semibold);
+  }
+
+  /*
+   * Geometría final de las gráficas, reservada antes de crearlas: alto = máx(16:9 del ancho, mínimo para la
+   * leyenda + el trazado de 190px). Así la leyenda y el trazado caben sin agrandar el marco al prepararse.
+   * 100cqi es el ancho del contenedor de la figura (.cc-fig o .cc-panel__fig).
+   */
+  .cc-chart {
+    --cc-chart-min: 280px;
+    aspect-ratio: auto;
+    min-height: max(calc(100cqi * 9 / 16), var(--cc-chart-min));
+  }
+  .cc-chart--sup {
+    --cc-chart-min: 330px;
+  }
+  /* Figura estrecha: la leyenda ocupa más filas (la de superposición, una por serie). */
+  @container (max-width: 479.98px) {
+    .cc-chart {
+      --cc-chart-min: 320px;
+    }
+    .cc-chart--sup {
+      --cc-chart-min: 392px;
+    }
+  }
+  /* Hueco del botón «Ver datos» (margen + control) mientras la gráfica no existe. */
+  [data-chart="pending"]::after {
+    content: "";
+    display: block;
+    height: calc(var(--space-2) + var(--control-h-sm));
+  }
+
+  /* Tarjeta estrecha (teléfono): la definición baja al tamaño del cuerpo. */
+  @container cc-card (max-width: 519.98px) {
+    .cc-def {
+      font-size: var(--text-base);
+    }
+    .cc-eq {
+      font-size: var(--text-sm);
+    }
+  }
+
+  /* Tarjeta ancha: texto y controles a la izquierda, figura a la derecha. */
+  @container cc-card (min-width: 820px) {
+    .cc-body {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-areas: "text text" "eqs fig" "side fig";
+      grid-template-rows: auto auto 1fr;
+      column-gap: var(--space-7);
+    }
+    /* Las ecuaciones y los controles siguen el flujo de la izquierda; la gráfica y el veredicto, el de
+       la derecha. */
+    .cc-body--ecuaciones {
+      grid-template-areas: "text text" "eqs fig" "side fig" "side out";
+      grid-template-rows: auto auto auto 1fr;
+    }
+    .cc-body--sistema {
+      grid-template-areas: "text text" "fig fig" "eqs side";
+      grid-template-rows: auto auto 1fr;
+    }
+    .cc-body--linealidad {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "text" "tabs";
+      grid-template-rows: auto;
+    }
+    .cc-fig {
+      align-self: start;
+    }
+  }
+
+  /* ---------------------------------------------------------------- a. diagrama de bloques */
+  .cc-bd {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "in" "sys" "out" "ctl";
+    gap: var(--space-6);
+    padding: var(--space-2) var(--space-7) var(--space-3) var(--space-6);
+  }
+  /* La capa de cables ocupa el diagrama desde el principio: un <svg> sin tamaño mide 300 × 150 px y, a
+     320 px de ancho, desbordaba la página hasta que measure() le daba el suyo (R32). El tamaño CSS
+     coincide con el que measure() escribe en width/height/viewBox (la caja de .cc-bd, sin borde). */
+  .cc-bd__wires {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .cc-bd__node {
+    position: relative;
+    display: grid;
+    gap: var(--space-1);
+    align-content: start;
+    min-width: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+    transition:
+      border-color var(--dur-toggle) var(--ease-out),
+      background-color var(--dur-toggle) var(--ease-out),
+      color var(--dur-toggle) var(--ease-out);
+  }
+  .cc-bd__node--in { grid-area: in; }
+  .cc-bd__node--sys { grid-area: sys; border-color: var(--accent-line); }
+  .cc-bd__node--out { grid-area: out; }
+  .cc-bd__node--ctl {
+    grid-area: ctl;
+    justify-items: start;
+    border-style: dashed;
+  }
+  /* Lazo abierto: el controlador se atenúa con el borde discontinuo, el texto en --muted y un fondo
+     transparente; nunca con opacidad sobre el texto (el contraste sigue siendo ≥ 4.5:1). */
+  [data-loop="open"] > .cc-bd__node--ctl {
+    border-color: var(--line-strong);
+    background: transparent;
+    color: var(--muted);
+  }
+  [data-loop="closed"] > .cc-bd__node--ctl {
+    border-style: solid;
+    border-color: var(--accent-line);
+  }
+  .cc-bd__label {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+  }
+  .cc-bd__value {
+    min-height: calc(var(--text-sm) * var(--lh-ui));
+    font-size: var(--text-sm);
+    font-variant-numeric: var(--font-numeric);
+    white-space: nowrap;
+  }
+  .cc-bd__note {
+    color: var(--muted);
+    font-size: var(--text-xs);
+  }
+  /* El valor del estado va siempre en su propia línea: si pudiera saltar de línea según su anchura,
+     el diagrama cambiaría de alto mientras corre la animación y cada cambio obligaría a medir de
+     nuevo (ResizeObserver → measure()). Así el alto del diagrama no depende de los números. */
+  .cc-bd__state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .cc-bd__spark {
+    display: block;
+    width: 100%;
+    height: 56px;
+  }
+  .cc-bd__schem {
+    display: block;
+    width: 100%;
+    height: 92px;
+  }
+
+  .cc-bd__wire {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+    transition: opacity var(--dur-toggle) var(--ease-out);
+  }
+  .cc-bd__head {
+    fill: var(--line-strong);
+    stroke: none;
+  }
+  .cc-bd__wire--fb {
+    stroke: var(--accent);
+  }
+  .cc-bd__wire--fb.cc-bd__head {
+    fill: var(--accent);
+  }
+  [data-loop="open"] .cc-bd__wire--fb {
+    opacity: 0.25;
+    stroke-dasharray: 4 4;
+  }
+  .cc-bd__rlabel {
+    fill: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-style: italic;
+  }
+  .cc-bd__dot {
+    fill: var(--c-out);
+  }
+  .cc-bd__dot--u {
+    fill: var(--c-in);
+  }
+  .cc-bd__dot--fb1,
+  .cc-bd__dot--fb2 {
+    fill: var(--accent);
+  }
+
+  @container cc-fig (min-width: 520px) {
+    .cc-bd {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 1fr);
+      grid-template-areas: "in sys out" ". ctl .";
+      column-gap: var(--space-7);
+      row-gap: var(--space-7);
+      padding: var(--space-2) 0 var(--space-6);
+    }
+  }
+
+  /* ---------------------------------------------------------------- b. oscilador y tiempo */
+  /* El lienzo no aporta tamaño (posición absoluta): la altura la fija el marco. */
+  .cc-osc {
+    position: relative;
+    height: 264px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--glass-c-bg);
+  }
+  .cc-osc__canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* ≥ 1200px, junto a «sistema» (más alta): la figura del tiempo crece (hasta 440px) y el resto queda al pie. */
+  @container cc (min-width: 1200px) {
+    .cc-body--tiempo {
+      grid-template-rows: auto minmax(264px, 440px) auto auto 1fr;
+    }
+    .cc-body--tiempo > .cc-fig {
+      display: grid;
+    }
+    .cc-osc {
+      height: auto;
+      min-height: 264px;
+    }
+  }
+  /* «tiempo» con al menos 700px propios (fila entera por debajo de 1200px): texto, ecuación y controles a la
+     izquierda; el oscilador a la derecha, tan alto como esa columna (mínimo 264px). */
+  @container cc-card (min-width: 700px) {
+    .cc-body--tiempo {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-areas: "text text" "eqs fig" "side fig";
+      grid-template-rows: auto auto 1fr;
+      column-gap: var(--space-7);
+    }
+    .cc-body--tiempo > .cc-fig {
+      display: grid;
+      align-self: stretch;
+    }
+    .cc-body--tiempo .cc-osc {
+      height: auto;
+      min-height: 264px;
+    }
+  }
+
+  /* ---------------------------------------------------------------- d. pestañas y paneles */
+  .cc-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding-top: var(--space-5);
+  }
+  .cc-panel__fig,
+  .cc-panel__side,
+  .cc-panel__wide {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+    min-width: 0;
+  }
+  .cc-panel__fig {
+    container-type: inline-size;
+  }
+  .cc-panel__side > p {
+    max-width: var(--measure);
+  }
+  @container cc-card (min-width: 820px) {
+    .cc-panel {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      column-gap: var(--space-7);
+    }
+    .cc-panel__wide {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .cc-table-wrap {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .cc-num-table {
+    min-width: 560px;
+  }
+  .cc-num-method {
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+  }
+  /* Muestra de la serie: mismo color y mismo trazo que en la gráfica (Euler [8,3], Heun [2,3], RK4 continuo). */
+  .cc-key {
+    display: inline-block;
+    width: 22px;
+    height: 6px;
+    margin-right: var(--space-2);
+    vertical-align: middle;
+    overflow: visible;
+  }
+  .cc-key line {
+    stroke: currentColor;
+    stroke-width: 2.5;
+  }
+  .cc-key--euler { color: var(--c-pole); }
+  .cc-key--heun { color: var(--c-state); }
+  .cc-key--rk4 { color: var(--c-zero); }
+
+  /* Por qué falta el orden observado («—»). */
+  .cc-num-why {
+    display: block;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--lh-ui);
+    white-space: normal;
+  }
+  .cc-num-referr {
+    font-variant-numeric: var(--font-numeric);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cc-card,
+    .cc-bd__node,
+    .cc-bd__wire {
+      transition: none;
+    }
+  }
+  [data-motion="reduce"] .cc-card,
+  [data-motion="reduce"] .cc-bd__node,
+  [data-motion="reduce"] .cc-bd__wire {
+    transition: none;
+  }
+}

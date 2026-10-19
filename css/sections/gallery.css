@@ -1,0 +1,696 @@
+/*
+ * css/sections/gallery.css — Propietario: gallery.
+ * Sección #galeria (prefijo gl-): riel de sistemas con placa deslizante, escenario con escena (nivel C)
+ * y gráficas (nivel C), dock de transporte (nivel A, pegado abajo), paneles (nivel B) y fila de G(s).
+ * Reglas dentro de @layer sections. Solo tokens de css/tokens.css (sin colores literales).
+ * API y ganchos: docs/api/gallery.md.
+ */
+@layer sections {
+  .gl {
+    /* Altura mínima del trazado de cada gráfica: 160 px de área (chart.chartArea) + 68 px de márgenes
+       y eje x de charts.js (14 + 8 + 46). La leyenda va aparte, encima. */
+    --gl-plot-min: calc(160px + 68px);
+    display: grid;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  /* ---------------------------------------------------------------- cabecera */
+  .gl-head {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-lead {
+    max-width: 62ch;
+    color: var(--muted);
+    font-size: var(--text-base);
+    line-height: var(--lh-body);
+  }
+
+  /* ---------------------------------------------------------------- riel de sistemas (tablist) */
+  .gl-rail {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-1);
+    min-width: 0;
+    padding: var(--space-1);
+    border: 1px solid var(--glass-b-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-b-bg);
+    box-shadow: var(--glass-b-highlight);
+  }
+
+  /* Placa que marca el sistema elegido: se desliza con transform (tamaño fijado al medir). */
+  .gl-rail__plate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--plate-w, 0px);
+    height: var(--plate-h, 0px);
+    border-radius: calc(var(--radius-md) - 4px);
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    transform: translate(var(--plate-x, 0px), var(--plate-y, 0px));
+    pointer-events: none;
+  }
+  /* Barra de acento en el borde superior de la placa. */
+  .gl-rail__plate::before {
+    content: '';
+    position: absolute;
+    left: var(--space-4);
+    right: var(--space-4);
+    top: 0;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: var(--accent);
+  }
+  .gl-rail:not(.is-ready) .gl-rail__plate {
+    opacity: 0;
+  }
+  .gl-rail.is-ready .gl-rail__plate {
+    transition: transform var(--dur-tab) var(--ease-tab);
+  }
+
+  .gl-sys {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    align-content: start;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-4);
+    border: 0;
+    border-radius: calc(var(--radius-md) - 4px);
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+      background-color var(--dur-hover) var(--ease-out),
+      transform var(--dur-press) var(--ease-out);
+  }
+  .gl-sys:active {
+    transform: scale(var(--press-scale));
+  }
+  .gl-sys:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: calc(-1 * var(--focus-offset));
+  }
+  @media (hover: hover) {
+    .gl-sys:not(.is-selected):hover {
+      background: var(--glass-b-hover);
+    }
+  }
+  .gl-sys__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .gl-sys__icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    color: var(--muted);
+    transition: background-color var(--dur-toggle) var(--ease-out), color var(--dur-toggle) var(--ease-out);
+  }
+  .gl-sys.is-selected .gl-sys__icon {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .gl-sys__cat {
+    min-width: 0;
+  }
+  .gl-sys__name {
+    font-size: var(--text-base);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-ui);
+    text-wrap: balance;
+  }
+  .gl-sys__sum {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+    text-wrap: pretty;
+  }
+
+  /* ---------------------------------------------------------------- escenario */
+  .gl-stage {
+    display: grid;
+    min-width: 0;
+    transition: opacity var(--dur-popover-in) var(--ease-out);
+  }
+  /*
+   * Antes del arranque perezoso: esqueleto con la geometría final del visor y la altura medida del
+   * escenario construido (masa-resorte), por punto de corte, para que la página no salte al construirse.
+   */
+  .gl-stage.is-pending {
+    align-content: start;
+    min-height: 92.5rem;             /* ≥ 1280 px: 1473–1527 px construido */
+  }
+  .gl-stage.is-leaving,
+  .gl-bodyhost.is-leaving {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-exit);
+  }
+  .gl-bodyhost {
+    min-width: 0;
+    transition: opacity var(--dur-popover-in) var(--ease-out);
+  }
+
+  .gl-system {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+
+  .gl-shead {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-3) var(--space-4);
+    min-width: 0;
+  }
+  .gl-shead__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .gl-shead__main {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-shead__title {
+    padding-top: 6px;
+  }
+  .gl-shead__summary {
+    max-width: 68ch;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .gl-shead__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    max-width: 22rem;
+    padding-top: 8px;
+  }
+
+  /* Los controles segmentados se desplazan dentro de su caja cuando no caben. Antes, una etiqueta larga
+     («Telaraña (discreto)» a 320 px) parte en dos líneas en lugar de salirse de su botón. */
+  .gl-seg-wrap {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding: 3px;
+    margin: -3px;
+  }
+  .gl-seg-wrap > .ds-seg {
+    min-width: min-content;
+  }
+  .gl-seg-wrap .ds-seg__opt {
+    min-width: min-content;
+    padding-block: 3px;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .gl-body {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+  }
+
+  /* ---------------------------------------------------------------- visor: escena + gráficas + dock */
+  .gl-viewer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-main {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  /* min-width: la escena nunca se mide más estrecha de lo que puede dibujar (p. ej. durante capturas).
+     align-self: stretch: si las gráficas necesitan más alto que la proporción, la escena ocupa la fila. */
+  .gl-scene {
+    --sc-aspect: 16 / 10;
+    min-width: 15rem;
+  }
+  .gl-main > .gl-scene {
+    align-self: stretch;
+  }
+  .gl-scene__empty {
+    padding: var(--space-5);
+    color: var(--muted);
+  }
+  /* Cada gráfica tiene al menos su altura mínima de trazado (más su leyenda); si sobra alto junto a la
+     escena se reparte entre ellas, y si no caben, la fila crece y la escena se estira con ella. */
+  .gl-charts {
+    display: grid;
+    grid-template-rows: repeat(var(--gl-rows, 2), auto);
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-charts > .gl-chart {
+    --ch-plot-min-height: var(--gl-plot-min);
+    aspect-ratio: auto;
+  }
+
+  /* Esqueleto del escenario (solo antes de construirlo): los marcos de la escena y de las gráficas. */
+  .gl-skel {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-skel__head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    min-height: 5.25rem;
+    margin-bottom: var(--space-2);
+  }
+  .gl-skel__icon {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .gl-skel__lines {
+    display: grid;
+    flex: 1 1 auto;
+    gap: var(--space-3);
+    max-width: 28rem;
+    padding-top: 6px;
+  }
+  .gl-skel__line {
+    height: 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+  }
+  .gl-skel__line--title {
+    width: 60%;
+    height: 1.5rem;
+  }
+  .gl-charts > .gl-skel__chart {
+    min-height: calc(var(--ch-plot-min-height) + 2px);
+  }
+  .gl-skel__dock {
+    height: 3.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+
+  .gl-halt[hidden],
+  .gl-note[hidden] {
+    display: none;
+  }
+  .gl-halt__text,
+  .gl-note__text {
+    max-width: none;
+  }
+  /* Aviso informativo: «Reiniciar» tras una detención deja la simulación en pausa en t = 0. */
+  .gl-note {
+    --callout-fg: var(--info);
+    --callout-bg: var(--info-soft);
+  }
+
+  /* Dock de transporte (nivel A): se queda al pie de la ventana mientras el visor está a la vista. */
+  .gl-dock {
+    position: sticky;
+    bottom: var(--space-3);
+    z-index: var(--z-dock);
+    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+    border-radius: var(--radius-md);
+  }
+
+  /* «Ver datos» de cada gráfica, en una fila bajo el visor. */
+  .gl-data {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: var(--space-2) var(--space-4);
+    min-width: 0;
+  }
+  .gl-data:empty {
+    display: none;
+  }
+  .gl-data > .ch-data {
+    min-width: 0;
+  }
+  .gl-data > .ch-data:has(> [aria-expanded="true"]) {
+    flex-basis: 100%;
+  }
+
+  /* ---------------------------------------------------------------- paneles */
+  /* Parámetros | Entrada arriba; las lecturas ocupan una franja a todo el ancho debajo. */
+  .gl-panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .gl-panel--read {
+    grid-column: 1 / -1;
+  }
+  .gl-panel {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+  /* El botón «Restablecer parámetros» pasa a su propia línea cuando no cabe junto al título (≲ 370 px). */
+  .gl-panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
+    min-height: var(--control-h-sm);
+    min-width: 0;
+  }
+  .gl-panel__title {
+    color: var(--ink);
+  }
+  .gl-panel__sym {
+    color: var(--muted);
+  }
+  .gl-sliders {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .gl-sliders[hidden] {
+    display: none;
+  }
+  /* En columnas estrechas (320 px, tableta) el valor baja a su propia línea, alineado a la derecha, cuando
+     no cabe junto al nombre del parámetro, en vez de dejar el nombre en una letra por línea. */
+  .gl-sliders .ds-slider__head {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+  .gl-sliders .ds-slider__value {
+    margin-inline-start: auto;
+  }
+  .gl-input__desc {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .gl-input__desc:empty {
+    display: none;
+  }
+  .gl-readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  /* Etiqueta en flujo de línea: el símbolo y el nombre son cajas atómicas, así que el nombre pasa entero a
+     la línea siguiente cuando no cabe junto al símbolo (como antes con flex-wrap).
+     El «?» va en la esquina de la tarjeta, fuera del flujo: con nombres largos (ωn, ζ, ts…) ya no cae solo a
+     una línea propia entre el nombre y la cifra. Un flotante de 1 px de alto le reserva el ancho solo en la
+     primera línea; las demás usan el ancho entero. El orden de tabulación y el nombre accesible no cambian. */
+  .gl-readout {
+    position: relative;
+  }
+  .gl-readout .ds-readout__label {
+    display: block;
+  }
+  .gl-readout:has(.ds-help) .ds-readout__label::before {
+    content: '';
+    float: right;
+    width: 22px;
+    height: 1px;
+  }
+  .gl-readout .ds-readout__sym {
+    display: inline-block;
+    margin-inline-end: calc(var(--text-xs) * 0.45);
+  }
+  .gl-readout .ds-readout__text {
+    display: inline-block;
+    max-width: 100%;
+  }
+  .gl-readout .ds-readout__label .ds-help {
+    position: absolute;
+    top: calc(var(--space-3) - 5px);
+    right: calc(var(--space-4) - 8px);
+    margin: 0;
+  }
+  @media (pointer: coarse) {
+    /* Objetivo táctil de 44 px con el mismo centro que el botón de 28 px. */
+    .gl-readout .ds-readout__label .ds-help {
+      top: calc(var(--space-3) - 13px);
+      right: calc(var(--space-4) - 16px);
+    }
+  }
+  .gl-readout .ds-readout__value {
+    white-space: normal;
+    flex-wrap: wrap;
+    /* 0.3em más el espacio que antes iba dentro de la unidad (--ds-readout-sep, ronda 2): la misma
+       separación de siempre en la línea, sin sangría cuando la unidad baja. */
+    column-gap: calc(0.3em + var(--ds-readout-sep));
+  }
+  /* Lecturas de texto (régimen, estabilidad…): una frase, no una cifra. */
+  .gl-readout--text .ds-readout__value {
+    font-size: var(--text-base);
+    letter-spacing: 0;
+  }
+
+  /* ---------------------------------------------------------------- G(s) o explicación */
+  .gl-tf {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-tf__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .gl-tf__note {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .gl-tf__note .ds-math {
+    color: var(--ink);
+  }
+
+  .gl-notf {
+    --callout-fg: var(--info);
+    --callout-bg: var(--info-soft);
+    min-width: 0;
+    padding: var(--space-4) var(--space-5);
+  }
+  .gl-notf__body {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+    max-width: 46rem;
+    flex: 1 1 auto;
+  }
+  .gl-notf__title {
+    color: var(--ink);
+  }
+  .gl-notf__text {
+    color: var(--ink);
+    font-size: var(--text-sm);
+    line-height: var(--lh-body);
+  }
+  .gl-notf__tex,
+  .gl-notf__lintex {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .gl-notf__linnote {
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+  .gl-notf__lin:empty {
+    display: none;
+  }
+  .gl-notf__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  /* A 320 px el texto del enlace a conceptos parte en dos líneas en vez de ensanchar el aviso. */
+  .gl-notf__actions .ds-btn,
+  .gl-notf__actions .ds-btn__label {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+  .gl-notf__actions .ds-btn {
+    padding-block: var(--space-1);
+    text-align: start;
+  }
+
+  /* ---------------------------------------------------------------- tableta */
+  @media (min-width: 768px) and (max-width: 1279.98px) {
+    .gl-sys {
+      padding: var(--space-3);
+    }
+  }
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .gl-scene {
+      --sc-aspect: 4 / 3;
+    }
+    .gl-stage.is-pending {
+      min-height: 97.5rem;           /* 1540–1580 px construido */
+    }
+  }
+  /* Tableta estrecha: la escena ocupa el ancho y las gráficas van debajo, una junto a otra. */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    /* Tarjetas de 136–200 px: la categoría va en su propia fila, bajo el icono, sin recortarse. */
+    .gl-sys__top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .gl-sys__cat {
+      max-width: 100%;
+    }
+    .gl-main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .gl-charts {
+      grid-template-rows: none;
+      grid-template-columns: repeat(var(--gl-rows, 2), minmax(0, 1fr));
+    }
+    .gl-charts > .gl-chart {
+      aspect-ratio: 16 / 11;
+    }
+    .gl-stage.is-pending {
+      min-height: 122.5rem;          /* 1922–2048 px construido */
+    }
+    .gl-shead {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    .gl-shead__chips {
+      grid-column: 2;
+      justify-content: flex-start;
+      max-width: none;
+      padding-top: 0;
+    }
+  }
+
+  /* ---------------------------------------------------------------- teléfono */
+  @media (max-width: 767.98px) {
+    .gl {
+      gap: var(--space-5);
+    }
+    .gl-rail {
+      display: flex;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: thin;
+    }
+    .gl-sys {
+      flex: 0 0 min(15rem, 78%);
+      scroll-snap-align: start;
+      padding: var(--space-3);
+    }
+    .gl-shead {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--space-3);
+    }
+    .gl-shead__chips {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      max-width: none;
+      padding-top: 0;
+    }
+    .gl-main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .gl-charts {
+      grid-template-rows: none;
+    }
+    .gl-charts > .gl-chart {
+      aspect-ratio: 16 / 11;
+    }
+    .gl-stage.is-pending {
+      min-height: 165rem;            /* 360–599 px: 2598–2729 px construido */
+    }
+    .gl-panels {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .gl-panel {
+      padding: var(--space-4);
+    }
+    .gl-readouts {
+      grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    }
+    .gl-notf {
+      padding: var(--space-3) var(--space-4);
+    }
+  }
+  @media (min-width: 600px) and (max-width: 767.98px) {
+    .gl-stage.is-pending {
+      min-height: 178rem;            /* 2756–2938 px construido */
+    }
+  }
+  @media (max-width: 359.98px) {
+    .gl-stage.is-pending {
+      min-height: 179.5rem;          /* 320–359 px: 2875 px construido */
+    }
+  }
+  /* Hasta 480 px cada segmento toma el ancho de su texto (no columnas iguales) para caber sin desplazarse. */
+  @media (max-width: 479.98px) {
+    .gl-seg-wrap > .ds-seg {
+      grid-auto-columns: auto;
+    }
+    .gl-seg-wrap .ds-seg__opt {
+      padding-inline: var(--space-2);
+    }
+  }
+
+  /* ---------------------------------------------------------------- colores forzados */
+  /* La placa (fondo) desaparece con colores forzados: la tarjeta elegida lleva su propio contorno. */
+  @media (forced-colors: active) {
+    .gl-rail__plate {
+      display: none;
+    }
+    .gl-sys[aria-selected="true"] {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+    .gl-sys[aria-selected="true"] .gl-sys__name {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+  }
+}

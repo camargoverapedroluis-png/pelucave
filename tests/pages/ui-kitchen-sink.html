@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F1823">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F1823'/%3E%3Cpath d='M4 16h24M16 4v24' stroke='%239AABBD' stroke-opacity='.5' stroke-width='1.5'/%3E%3Cpath d='M8.5 8.5l5 5m0-5l-5 5' stroke='%23E3B25C' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='11' cy='22' r='3' fill='none' stroke='%236DD4B8' stroke-width='2'/%3E%3C/svg%3E">
+  <title>Sistema de diseño: Laboratorio de Sistemas Dinámicos</title>
+  <!--
+    tests/pages/ui-kitchen-sink.html — Propietario: design-system.
+    Página de pruebas: todos los componentes de DSL.ui y el shell, cada bloque en los dos temas
+    (panel oscuro y panel claro lado a lado). Las cinco secciones usan los ids reales (#inicio…)
+    para probar el scrollspy, el desplazamiento con la barra fija y la hoja «Menú».
+    Solo proyecto «src» (tests/e2e/shell.spec.mjs). Ver docs/api/ui.md y docs/api/shell.md.
+  -->
+  <script>
+    (function (root) {
+      root.classList.add('js');
+      try {
+        var saved = JSON.parse(window.localStorage.getItem('dsl.v1.theme'));
+        if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+      } catch (e) { /* sin almacenamiento */ }
+    })(document.documentElement);
+  </script>
+  <link rel="stylesheet" href="../../vendor/fonts.css">
+  <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/shell.css">
+  <style>
+    /* Maquetación propia de la página de pruebas (prefijo ks-; solo tokens). */
+    @layer sections {
+      .ks-wrap { display: grid; gap: var(--space-6); max-width: var(--container-max); margin-inline: auto; }
+      .ks-intro { display: grid; gap: var(--space-4); max-width: 60rem; }
+      .ks-intro p { color: var(--muted); }
+      .ks-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+      .ks-pane {
+        display: grid; gap: var(--space-6); align-content: start; min-width: 0;
+        padding: var(--space-6); border-radius: var(--radius-lg);
+        background: var(--bg); color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .ks-pane__label { color: var(--muted); font-size: var(--text-sm); font-weight: var(--fw-medium); }
+      .ks-block { display: grid; gap: var(--space-3); min-width: 0; }
+      .ks-block > h3 { font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--fw-semibold); letter-spacing: 0; color: var(--muted); }
+      .ks-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); min-width: 0; }
+      .ks-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+      .ks-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+      .ks-display { font-family: var(--font-display); font-size: var(--text-display); font-weight: var(--fw-display); line-height: var(--lh-display); letter-spacing: var(--tracking-display); max-width: none; text-wrap: balance; }
+      .ks-h2 { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--fw-display); line-height: var(--lh-heading); letter-spacing: var(--tracking-heading); }
+      .ks-h3 { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--fw-display); line-height: 1.2; }
+      .ks-small { font-size: var(--text-sm); color: var(--muted); }
+      .ks-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: var(--space-2); }
+      .ks-swatch { display: grid; gap: var(--space-1); font-size: var(--text-xs); color: var(--muted); }
+      .ks-swatch i { display: block; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+      .ks-plot { aspect-ratio: 16 / 7; display: grid; place-items: center; color: var(--muted); font-size: var(--text-sm); }
+      .ks-dock { padding: var(--space-3) var(--space-4); }
+      .ks-math-panel { display: grid; gap: var(--space-3); }
+      @media (max-width: 1199.98px) {
+        .ks-split { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 767.98px) {
+        .ks-pane { padding: var(--space-4); }
+        .ks-grid2, .ks-grid3 { grid-template-columns: minmax(0, 1fr); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="app-header" data-mount="shell-header"></header>
+
+  <main id="contenido" class="app-main" tabindex="-1">
+    <section id="inicio" class="app-section" aria-labelledby="inicio-title" data-testid="section-inicio">
+      <div class="ks-wrap">
+        <div class="ks-intro">
+          <h1 id="inicio-title">Sistema de diseño</h1>
+          <p>Cada componente de la interfaz en sus dos temas: a la izquierda el oscuro, que es el predeterminado, y a la derecha el claro. Todo sale de los tokens de <code>css/tokens.css</code>.</p>
+        </div>
+        <div class="ks-split" data-demo="tipografia"></div>
+      </div>
+    </section>
+
+    <section id="conceptos" class="app-section" aria-labelledby="conceptos-title" data-testid="section-conceptos">
+      <div class="ks-wrap">
+        <h2 id="conceptos-title">Acciones y estados</h2>
+        <div class="ks-split" data-demo="acciones"></div>
+      </div>
+    </section>
+
+    <section id="modelado" class="app-section" aria-labelledby="modelado-title" data-testid="section-modelado">
+      <div class="ks-wrap">
+        <h2 id="modelado-title">Controles</h2>
+        <div class="ks-split" data-demo="controles"></div>
+      </div>
+    </section>
+
+    <section id="galeria" class="app-section" aria-labelledby="galeria-title" data-testid="section-galeria">
+      <div class="ks-wrap">
+        <h2 id="galeria-title">Simulación</h2>
+        <div class="ks-split" data-demo="simulacion"></div>
+      </div>
+    </section>
+
+    <section id="transferencia" class="app-section" aria-labelledby="transferencia-title" data-testid="section-transferencia">
+      <div class="ks-wrap">
+        <h2 id="transferencia-title">Ecuaciones y pasos</h2>
+        <div class="ks-split" data-demo="ecuaciones"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer" data-mount="shell-footer"></footer>
+
+  <script src="../../vendor/katex/katex.min.js"></script>
+  <script src="../../js/core/ns.js"></script>
+  <script src="../../js/ui/icons-data.js"></script>
+  <script src="../../js/ui/components.js"></script>
+  <script src="../../js/ui/shell.js"></script>
+  <script>
+    /* Construye los bloques de demostración dos veces (tema oscuro y tema claro). */
+    (function (DSL) {
+      'use strict';
+      var ui = DSL.ui;
+      var h = DSL.util.h;
+      window.KS = { log: [], handles: {} };
+      function log(msg) { window.KS.log.push(msg); }
+
+      function block(title) {
+        var kids = Array.prototype.slice.call(arguments, 1);
+        return h('div', { class: 'ks-block' }, h('h3', null, title), kids);
+      }
+      function row() {
+        return h('div', { class: 'ks-row' }, Array.prototype.slice.call(arguments));
+      }
+      function tex(src, cls, display) {
+        var span = h('span', { class: cls || 'ds-math', translate: 'no' });
+        window.katex.render(src, span, { throwOnError: false, trust: true, strict: 'ignore', displayMode: !!display });
+        return span;
+      }
+
+      var builders = {
+        tipografia: function (t, p) {
+          var swatches = ['--bg', '--surface-1', '--surface-2', '--surface-3', '--ink', '--muted', '--accent', '--c-in', '--c-out', '--c-state', '--c-pole', '--c-zero'];
+          return [
+            block('Escala tipográfica',
+              h('p', { class: 'ks-display' }, 'Polos que deciden el tiempo'),
+              h('p', { class: 'ks-h2' }, 'Respuesta al escalón'),
+              h('p', { class: 'ks-h3' }, 'Masa, resorte y amortiguador'),
+              h('p', null, 'Un sistema dinámico es un conjunto de elementos interconectados cuyas reglas de cambio se describen con ecuaciones. Su estado evoluciona con el tiempo ', h('span', { class: 'ds-sym', translate: 'no' }, 't'), ', y la función de transferencia resume cómo responde a una entrada.'),
+              h('p', { class: 'ks-small' }, 'Texto secundario a 14 px: unidades, notas y marcas de ejes.')),
+            block('Colores (tokens)',
+              h('div', { class: 'ks-swatches' }, swatches.map(function (name) {
+                return h('div', { class: 'ks-swatch' }, h('i', { style: { background: 'var(' + name + ')' } }), h('span', null, name));
+              })))
+          ];
+        },
+
+        acciones: function (t, p) {
+          var pressed = ui.button({ label: 'Ver datos', icon: 'table', pressed: false, testid: p + '-pressed', onClick: function (e, on) { log('ver-datos:' + on); } });
+          var fb = ui.toggle({ label: 'Realimentación', checked: t === 'dark', testid: p + '-toggle', description: 'Cierra el lazo: la salida vuelve a restarse de la entrada.', onChange: function (v) { log('toggle:' + v); } });
+          return [
+            block('Botones',
+              row(
+                ui.button({ label: 'Simular', icon: 'play', variant: 'primary', testid: p + '-btn-primary', onClick: function () { log('simular'); } }),
+                ui.button({ label: 'Ver derivación', testid: p + '-btn-secondary' }),
+                ui.button({ label: 'Restablecer parámetros', icon: 'undo-2', variant: 'ghost', testid: p + '-btn-ghost' }),
+                ui.button({ icon: 'rotate-ccw', iconOnly: true, ariaLabel: 'Reiniciar', title: 'Reiniciar', testid: p + '-btn-icon' })),
+              row(
+                ui.button({ label: 'Ver G(s) paso a paso', iconEnd: 'arrow-right', testid: p + '-btn-iconend' }),
+                pressed,
+                ui.button({ label: 'Simular', variant: 'primary', disabled: true }),
+                ui.button({ label: 'Paso siguiente', size: 'sm' }),
+                ui.button({ icon: 'x', iconOnly: true, size: 'sm', variant: 'ghost', ariaLabel: 'Cerrar' }))),
+            block('Chips',
+              row(
+                ui.chip({ label: 'Lineal' }),
+                ui.chip({ label: 'Paso 2 de 4', tone: 'accent' }),
+                ui.chip({ label: 'Estable', tone: 'success', icon: 'check', title: 'Todos los polos tienen parte real negativa' }),
+                ui.chip({ label: 'Subamortiguado', tone: 'warning', icon: 'triangle-alert' }),
+                ui.chip({ label: 'Inestable', tone: 'danger', icon: 'circle-alert' }),
+                ui.chip({ label: 'τ = 2.00 s', tone: 'info' }))),
+            block('Conmutador, ayuda y teclas',
+              fb.el,
+              row(h('span', null, 'Factor de amortiguamiento ', h('span', { class: 'ds-sym', translate: 'no' }, 'ζ')),
+                ui.help('Mide cuánta energía disipa el sistema en cada oscilación. Con ζ < 1 la respuesta oscila; con ζ ≥ 1 no.', { label: 'Factor de amortiguamiento', testid: p + '-help' }),
+                ui.help('Este texto es largo a propósito para comprobar el ajuste de línea y la colocación del tooltip cerca del borde derecho de la ventana.', { label: 'Borde derecho', testid: p + '-help-edge', side: 'right' })),
+              h('p', { class: 'ks-small' }, 'Pulse ', h('kbd', { class: 'ds-kbd' }, '←'), ' y ', h('kbd', { class: 'ds-kbd' }, '→'), ' para cambiar de paso; ', h('kbd', { class: 'ds-kbd' }, 'Esc'), ' cierra los tooltips.')),
+            block('Avisos en línea',
+              h('div', { class: 'ds-callout' }, ui.icon('info'), h('p', null, 'El tanque de Torricelli se linealiza alrededor del punto de operación h₀.')),
+              h('div', { class: 'ds-callout ds-callout--warning' }, ui.icon('triangle-alert'), h('p', null, 'Con aT > 2 el método de Euler se vuelve inestable.')),
+              h('div', { class: 'ds-callout ds-callout--danger' }, ui.icon('circle-alert'), h('p', null, 'El modelo SIR no es lineal: no tiene una G(s) global.'))),
+            block('Tarjetas',
+              h('div', { class: 'ks-grid2' },
+                ui.card({ title: 'Variable independiente', icon: 'timer', spotlight: true, interactive: true, testid: p + '-card',
+                  body: h('p', null, 'El tiempo avanza y el estado cambia con él, evaluado conforme transcurre.'),
+                  footer: ui.button({ label: 'Ver ejemplo', size: 'sm', variant: 'ghost', iconEnd: 'arrow-right' }) }),
+                ui.card({ title: 'Linealidad', spotlight: true,
+                  body: h('p', null, 'Proporcionalidad y superposición: la respuesta a u₁ + u₂ es la suma de las respuestas.') })))
+          ];
+        },
+
+        controles: function (t, p) {
+          var m = ui.slider({ label: 'Masa', symbol: 'm', unit: 'kg', min: 0.1, max: 10, step: 0.1, value: 1, tooltip: 'Inercia del bloque: cuanto mayor, más lenta la respuesta.', testid: p + '-slider-m',
+            onInput: function (v, o) { log('m:input:' + v); }, onChange: function (v) { log('m:change:' + v); } });
+          var k = ui.slider({ label: 'Rigidez', symbol: 'k', unit: 'N/m', min: 1, max: 1000, value: 40, scale: 'log', tooltip: 'Constante del resorte (escala logarítmica).', testid: p + '-slider-k' });
+          var b = ui.slider({ label: 'Amortiguamiento', symbol: 'b', unit: 'N·s/m', min: 0, max: 20, step: 0.5, value: 2.5, testid: p + '-slider-b' });
+          var T = ui.slider({ label: 'Paso de integración', symbol: 'T', unit: 's', min: 0.01, max: 1, step: 0.01, value: 0.1, numberField: false, testid: p + '-slider-t' });
+          var dis = ui.slider({ label: 'Resistencia', symbol: 'R', unit: 'Ω', min: 0, max: 100, step: 1, value: 10, disabled: true });
+          var input = ui.segmented({ label: 'Entrada', value: 'escalon', testid: p + '-seg', onChange: function (v) { log('seg:' + v); },
+            options: [{ value: 'escalon', label: 'Escalón' }, { value: 'pulso', label: 'Pulso' }, { value: 'senoidal', label: 'Senoidal' }] });
+          var method = ui.segmented({ label: 'Método', value: 'rk4', equal: false,
+            options: [{ value: 'euler', label: 'Euler' }, { value: 'heun', label: 'Heun' }, { value: 'rk4', label: 'RK4' }, { value: 'rk45', label: 'RK45 adaptativo' }] });
+          var tb = ui.tabs({ label: 'Gráficas', value: 'paso', testid: p + '-tabs', onChange: function (id) { log('tab:' + id); },
+            tabs: [
+              { id: 'paso', label: 'Respuesta al escalón', icon: 'chart-spline', panel: h('div', null, h('div', { class: 'ds-plot ks-plot' }, 'Área de trazado (nivel C, sólido)')) },
+              { id: 'polos', label: 'Polos y ceros', icon: 'crosshair', panel: h('div', null, h('div', { class: 'ds-plot ks-plot' }, 'Plano s')) },
+              { id: 'bode', label: 'Diagrama de Bode', icon: 'activity', panel: h('div', null, h('div', { class: 'ds-plot ks-plot' }, 'Magnitud y fase')) }
+            ] });
+          window.KS.handles[p] = Object.assign(window.KS.handles[p] || {}, { m: m, k: k, b: b, T: T, input: input, tabs: tb });
+          var sel = h('span', { class: 'ds-select' }, h('select', { id: p + '-select', 'aria-label': 'Sistema' },
+            h('option', null, 'Masa-resorte-amortiguador'), h('option', null, 'Circuito RLC serie'), h('option', null, 'Tanque lineal')));
+          return [
+            block('Sliders', m.el, k.el, b.el, T.el, dis.el),
+            block('Selección', row(input.el), row(method.el)),
+            block('Pestañas', tb.el),
+            block('Campos',
+              h('div', { class: 'ks-grid2' },
+                h('div', { class: 'ds-field' },
+                  h('label', { class: 'ds-label', for: p + '-num' }, 'Coeficientes del numerador'),
+                  h('input', { class: 'ds-input', id: p + '-num', value: '1, 2', inputmode: 'decimal', autocomplete: 'off' }),
+                  h('p', { class: 'ds-hint' }, 'En potencias descendentes, separados por comas.')),
+                h('div', { class: 'ds-field' },
+                  h('label', { class: 'ds-label', for: p + '-den' }, 'Coeficientes del denominador'),
+                  h('input', { class: 'ds-input', id: p + '-den', value: '0, 1', 'aria-invalid': 'true', 'aria-describedby': p + '-den-err', autocomplete: 'off' }),
+                  h('p', { class: 'ds-error', id: p + '-den-err' }, 'El primer coeficiente no puede ser 0. Escriba el término de mayor grado primero.'))),
+              h('div', { class: 'ds-field' }, h('label', { class: 'ds-label', for: p + '-select' }, 'Sistema'), sel))
+          ];
+        },
+
+        simulacion: function (t, p) {
+          var time = 0;
+          var speed = 1;
+          var tr;
+          var loop = DSL.util.loop(function (dt) { time += dt * speed; tr.setTime(time); });
+          tr = ui.transport({ testidPrefix: p,
+            onPlay: function () { log('play'); loop.start(); },
+            onPause: function () { log('pause'); loop.stop(); },
+            onReset: function () { log('reset'); time = 0; tr.setTime(0); },
+            onSpeed: function (x) { log('speed:' + x); speed = x; } });
+          var zeta = ui.readout({ label: 'Amortiguamiento', tex: '\\zeta', value: 0.354, digits: 3, testid: p + '-ro-zeta' });
+          var wn = ui.readout({ label: 'Frecuencia natural', tex: '\\omega_n', value: 3.1623, unit: 'rad/s', testid: p + '-ro-wn' });
+          var tau = ui.readout({ label: 'Constante de tiempo', tex: '\\tau', value: 2, unit: 's', tone: 'accent' });
+          var r0 = ui.readout({ label: 'Número reproductivo básico', tex: 'R_0', value: 2.5, live: true, testid: p + '-ro-live' });
+          var inline = ui.readout({ label: 'Sobrepaso', value: 30.5, unit: '%', layout: 'inline' });
+          var mp = ui.readout({ label: 'Establecimiento (2 %)', value: 'Calculando…' });
+          var tipped = ui.readout({ label: 'Sobrepaso máximo', tex: 'M_p', value: 16.3, unit: '%', testid: p + '-ro-tip',
+            tip: 'Cuánto supera el pico de la respuesta a su valor final, en porcentaje del valor final.' });
+          window.KS.handles[p] = Object.assign(window.KS.handles[p] || {}, { transport: tr, r0: r0 });
+          var reveal = h('div', { class: 'ks-grid3', 'data-testid': p + '-reveal' },
+            [['Pico', 1.31, ''], ['Tiempo de pico', 1.04, 's'], ['Valor final', 1, '']].map(function (r) {
+              return h('div', { class: 'ks-reveal-item' }, ui.readout({ label: r[0], value: r[1], unit: r[2] }).el);
+            }));
+          return [
+            block('Transporte', h('div', { class: 'ds-glass ks-dock' }, tr.el)),
+            block('Lecturas',
+              h('div', { class: 'ks-grid3', 'data-testid': p + '-readouts' }, zeta.el, wn.el, tau.el, r0.el, mp.el, tipped.el, h('div', null, inline.el))),
+            block('Avisos',
+              row(
+                ui.button({ label: 'Restablecer parámetros', icon: 'undo-2', testid: p + '-toast-undo', onClick: function () {
+                  ui.toast('Parámetros restablecidos a sus valores iniciales.', { tone: 'neutral', action: { label: 'Deshacer', onClick: function () { log('undo'); } }, testid: p + '-toast' });
+                } }),
+                ui.button({ label: 'Simular con aT > 2', variant: 'ghost', testid: p + '-toast-warn', onClick: function () {
+                  ui.toast('Con aT > 2 la iteración de Euler diverge. Reduzca el paso T.', { tone: 'warning', duration: 0, testid: p + '-toast-w' });
+                } }))),
+            block('Aparición única al entrar en pantalla', reveal)
+          ];
+        },
+
+        ecuaciones: function (t, p) {
+          var g = tex('G(s)=\\dfrac{\\htmlClass{ds-term}{1}}{\\htmlClass{ds-term}{m}\\,s^{2}+\\htmlClass{ds-term}{b}\\,s+\\htmlClass{ds-term}{k}}', 'ds-math-block ds-math-xl', true);
+          var hl = ui.button({ label: 'Resaltar términos', size: 'sm', pressed: false, testid: p + '-hl', onClick: function (e, on) {
+            Array.prototype.forEach.call(g.querySelectorAll('.ds-term'), function (el) { el.classList.toggle('is-hl', on); });
+          } });
+          var steps = [
+            ['Ley física', [h('p', null, 'Segunda ley de Newton sobre la masa: ', tex('m\\ddot{x} + b\\dot{x} + kx = F')), h('p', { class: 'ks-small' }, 'Condiciones iniciales nulas.')]],
+            ['Transformada de Laplace', [h('p', null, 'Con ', tex('\\mathcal{L}\\{\\dot{x}\\} = sX(s)'), ' y ', tex('\\mathcal{L}\\{\\ddot{x}\\} = s^2X(s)'), ':'), tex('(ms^2 + bs + k)\\,X(s) = F(s)', 'ds-math-block', true)]],
+            ['Despeje de G(s)', [tex('G(s) = \\frac{X(s)}{F(s)} = \\frac{1}{ms^2+bs+k}', 'ds-math-block', true)]]
+          ];
+          var cols = steps.map(function (s, i) {
+            return ui.collapsible({ title: s[0], number: i + 1, open: i === 0, content: s[1], testid: p + '-step-' + (i + 1) });
+          });
+          var routh = h('table', { class: 'ds-table' },
+            h('caption', null, 'Tabla de Routh para s² + 2s + 5'),
+            h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Fila'), h('th', { scope: 'col' }, 'Columna 1'), h('th', { scope: 'col' }, 'Columna 2'))),
+            h('tbody', null,
+              h('tr', null, h('td', null, tex('s^2')), h('td', null, '1'), h('td', null, '5')),
+              h('tr', null, h('td', null, tex('s^1')), h('td', null, '2'), h('td', null, '0')),
+              h('tr', null, h('td', null, tex('s^0')), h('td', null, '5'), h('td', null, '—'))));
+          var err = h('div', { class: 'app-error', role: 'alert' }, ui.icon('triangle-alert'),
+            h('div', null, h('strong', null, 'No se pudo cargar la parte «Galería».'), h('span', null, 'El resto de la página funciona. Recargue la página para intentarlo de nuevo.')));
+          return [
+            block('Función de transferencia', h('div', { class: 'ds-panel ks-math-panel' }, g, row(hl),
+              h('p', null, 'En línea: los polos de ', tex('G(s)'), ' son las raíces de ', tex('ms^2+bs+k'), '.'))),
+            block('Procedimiento paso a paso', h('div', null, cols.map(function (c) { return c.el; }))),
+            block('Tabla', routh),
+            block('Límite de errores (app.js)', err)
+          ];
+        }
+      };
+
+      var demos = document.querySelectorAll('[data-demo]');
+      Array.prototype.forEach.call(demos, function (host) {
+        var name = host.getAttribute('data-demo');
+        ['dark', 'light'].forEach(function (theme) {
+          var p = 'ds-ks-' + theme;
+          var pane = h('div', { class: 'ks-pane', 'data-theme': theme, 'data-testid': p + '-' + name },
+            h('p', { class: 'ks-pane__label' }, theme === 'dark' ? 'Tema oscuro' : 'Tema claro'));
+          builders[name](theme, p).forEach(function (node) { pane.appendChild(node); });
+          host.appendChild(pane);
+        });
+      });
+
+      DSL.util.ready(function () {
+        var dark = document.querySelector('[data-testid="ds-ks-dark-reveal"]');
+        var light = document.querySelector('[data-testid="ds-ks-light-reveal"]');
+        window.KS.stopReveal = [ui.reveal(dark, { items: '.ks-reveal-item', stagger: 70 }), ui.reveal(light, { items: '.ks-reveal-item', stagger: 70 })];
+      });
+    })(window.DSL);
+  </script>
+  <script src="../../js/app.js"></script>
+</body>
+</html>

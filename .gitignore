@@ -1,0 +1,19 @@
+# Dependencias (vendor/ sí se versiona: la app funciona sin npm install)
+node_modules/
+
+# Resultados de Playwright y temporales
+test-results/
+playwright-report/
+blob-report/
+*.tmp-*
+
+# Skills de Claude (no son parte de la página)
+.claude/
+
+# Python (tests/crosscheck)
+__pycache__/
+.venv/
+
+# Sistema
+.DS_Store
+Thumbs.db

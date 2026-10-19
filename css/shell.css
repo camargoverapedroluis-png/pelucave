@@ -1,0 +1,513 @@
+/*
+ * css/shell.css — Propietario: design-system.
+ * Cabecera fija de vidrio (marca, navegación con indicador deslizante, conmutador de tema), hoja «Menú»
+ * para teléfono y pie con créditos (prefijos sh- y app-). Reglas dentro de @layer shell.
+ * Solo tokens de css/tokens.css (sin colores literales). API: docs/api/shell.md.
+ */
+@layer shell {
+  /* ================================================================== barra */
+  .app-header.is-at-top {
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .app-header.is-menu-open {
+    background: var(--glass-a-bg);
+    border-bottom-color: var(--glass-a-border);
+    -webkit-backdrop-filter: blur(var(--glass-blur-bar));
+    backdrop-filter: blur(var(--glass-blur-bar));
+  }
+
+  .sh-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    height: var(--header-h);
+    max-width: calc(var(--container-max) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+
+  /* Centinela: decide si la barra está sobre el inicio (transparente) o la página se desplazó (vidrio). */
+  .sh-sentinel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 8px;              /* a más de 8 px de desplazamiento la barra es de vidrio (como scrollTo) */
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* ---------- marca */
+  .sh-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    min-height: var(--control-h);
+    margin-left: -4px;
+    padding: 0 4px;
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .sh-mark {
+    flex: none;
+    overflow: visible;
+  }
+  .sh-mark__axis {
+    fill: none;
+    stroke: var(--muted);
+    stroke-opacity: 0.55;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .sh-mark__pole {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+  }
+  .sh-mark__zero {
+    fill: none;
+    stroke: var(--c-zero);
+    stroke-width: 2.2;
+  }
+  .sh-brand .sh-mark__pole {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform var(--dur-toggle) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .sh-brand:hover .sh-mark__pole {
+      transform: rotate(45deg);
+    }
+  }
+  .sh-wordmark {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: var(--fw-display);
+    line-height: 1.1;
+    letter-spacing: -0.012em;
+    white-space: nowrap;
+  }
+
+  /* ---------- navegación */
+  .sh-nav {
+    margin-left: auto;
+    min-width: 0;
+  }
+  .sh-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sh-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-h);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .sh-link:hover {
+      color: var(--ink);
+    }
+  }
+  .sh-link[aria-current="true"] {
+    color: var(--ink);
+  }
+  .sh-link:focus-visible {
+    outline-offset: -2px;
+  }
+
+  /* Indicador: un cursor de acento que recorre el borde inferior de la barra, como sobre un eje. */
+  .sh-indicator {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 100px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--accent);
+    transform-origin: left center;
+    transform: translateX(var(--ind-x, 0px)) scaleX(var(--ind-s, 0));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+  .sh-indicator.is-ready {
+    transition: transform var(--dur-tab) var(--ease-tab), opacity var(--dur-fast) var(--ease-out);
+  }
+  .sh-indicator.is-visible {
+    opacity: 1;
+  }
+
+  /* ---------- acciones */
+  .sh-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex: none;
+    margin-right: calc(-1 * var(--space-2));
+  }
+  .sh-swap {
+    display: inline-grid;
+    width: 20px;
+    height: 20px;
+  }
+  .sh-swap > .ds-icon {
+    grid-area: 1 / 1;
+    transition: opacity var(--dur-toggle) var(--ease-out), transform var(--dur-toggle) var(--ease-out);
+  }
+  .sh-theme[data-mode="dark"] .sh-theme__moon,
+  .sh-theme[data-mode="light"] .sh-theme__sun {
+    opacity: 0;
+    transform: rotate(-70deg) scale(0.7);
+  }
+  .sh-menu-btn {
+    display: none;
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+    color: var(--ink);
+  }
+  .sh-menu-btn[aria-expanded="true"] .sh-menu-btn__open,
+  .sh-menu-btn[aria-expanded="false"] .sh-menu-btn__close {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.7);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sh-swap > .ds-icon {
+      transition-property: opacity;
+    }
+  }
+
+  /* ================================================================== hoja «Menú» (teléfono) */
+  .sh-scrim {
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    z-index: calc(var(--z-sheet) - 1);
+    background: var(--scrim);
+    opacity: 0;
+    transition: opacity var(--dur-overlay-out) var(--ease-exit);
+  }
+  .sh-scrim[data-state="open"] {
+    opacity: 1;
+    transition: opacity var(--dur-overlay-in) var(--ease-out);
+  }
+  .sh-sheet {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    z-index: var(--z-sheet);
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    padding: var(--space-3) var(--gutter) var(--space-6);
+    border-bottom: 1px solid var(--glass-a-border);
+    background: var(--glass-a-bg);
+    box-shadow: var(--glass-a-highlight), var(--shadow-overlay);
+    -webkit-backdrop-filter: blur(var(--glass-blur-overlay));
+    backdrop-filter: blur(var(--glass-blur-overlay));
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path var(--dur-overlay-out) var(--ease-exit);
+  }
+  .sh-sheet[data-state="open"] {
+    clip-path: inset(0 0 -80px 0);
+    transition: clip-path var(--dur-overlay-in) var(--ease-out);
+  }
+  .sh-sheet__list {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sh-sheet__item {
+    opacity: 0;
+    transform: translateY(calc(-2 * var(--travel-pop)));
+    transition: opacity var(--dur-fast) var(--ease-exit), transform var(--dur-fast) var(--ease-exit);
+  }
+  .sh-sheet[data-state="open"] .sh-sheet__item {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-step-in) var(--ease-out) calc(80ms + var(--i, 0) * var(--stagger)),
+      transform var(--dur-step-in) var(--ease-out) calc(80ms + var(--i, 0) * var(--stagger));
+  }
+  .sh-sheet__link {
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--fw-display);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    transition: background-color var(--dur-hover) var(--ease-out), color var(--dur-hover) var(--ease-out);
+  }
+  .sh-sheet__link:active {
+    background: var(--surface-3);
+  }
+  .sh-sheet__link[aria-current="true"] {
+    color: var(--accent);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .sh-sheet__link:focus-visible {
+    outline-offset: -2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sh-sheet,
+    .sh-sheet[data-state="open"] {
+      clip-path: none;
+    }
+    .sh-sheet {
+      opacity: 0;
+      transition: opacity var(--dur-overlay-out) var(--ease-exit);
+    }
+    .sh-sheet[data-state="open"] {
+      opacity: 1;
+      transition: opacity var(--dur-overlay-in) var(--ease-out);
+    }
+  }
+
+  .sh-lock {
+    overflow: hidden;
+  }
+
+  /* ================================================================== pie: un cierre, no un mapa del sitio */
+  .app-footer {
+    background: var(--surface-inset);
+  }
+  .sh-footer {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--space-7) var(--grid-gap);
+    max-width: calc(var(--container-max) + 2 * var(--gutter));
+    margin: 0 auto;
+    padding: var(--space-9) var(--gutter) var(--space-7);
+  }
+  .sh-footer__lead {
+    grid-column: 1 / span 6;
+    min-width: 0;
+  }
+  .sh-footer__name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: none;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-heading);
+    letter-spacing: var(--tracking-heading);
+    text-wrap: balance;
+  }
+  .sh-footer__mark {
+    width: 40px;
+    height: 40px;
+  }
+  .sh-footer__note {
+    margin-top: var(--space-4);
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-body);
+  }
+  .sh-footer__credits {
+    grid-column: 8 / span 5;
+    min-width: 0;
+  }
+  .sh-footer__title {
+    margin-bottom: var(--space-3);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-ui);
+    letter-spacing: 0;
+  }
+  .sh-credits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
+    margin: 0;
+  }
+  .sh-credit {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .sh-credit dt {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--lh-ui);
+  }
+  .sh-credit dd {
+    display: grid;
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .sh-credit__name {
+    color: var(--ink);
+    font-weight: var(--fw-medium);
+  }
+  .sh-credit__lic {
+    color: var(--muted);
+  }
+  .sh-footer__top {
+    grid-column: 1 / -1;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--control-h);
+    margin-left: calc(-1 * var(--space-3));
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+    text-decoration: none;
+    transition: color var(--dur-hover) var(--ease-out);
+  }
+  .sh-footer__top .ds-icon {
+    transition: transform var(--dur-hover) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .sh-footer__top:hover {
+      color: var(--ink);
+    }
+    .sh-footer__top:hover .ds-icon {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* ================================================================== tableta estrecha y teléfono */
+  @media (max-width: 1023.98px) {
+    .sh-bar {
+      gap: var(--space-4);
+    }
+    .sh-wordmark {
+      display: grid;
+      font-size: 0.9375rem;
+      line-height: 1.08;
+    }
+    .sh-link {
+      padding: 0 10px;
+    }
+    .sh-footer__lead,
+    .sh-footer__credits {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .sh-nav {
+      display: none;
+    }
+    .sh-actions {
+      margin-left: auto;
+    }
+    .sh-menu-btn {
+      display: inline-flex;
+    }
+    .sh-indicator {
+      display: none;
+    }
+    .sh-footer {
+      padding-top: var(--space-8);
+      gap: var(--space-6);
+    }
+    .sh-footer__name {
+      font-size: var(--text-lg);
+    }
+    .sh-footer__mark {
+      width: 32px;
+      height: 32px;
+    }
+    .sh-credits {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .sh-sheet,
+    .sh-scrim {
+      display: none;
+    }
+  }
+
+  /* Teléfonos muy estrechos (320–389 px): «Menú» queda solo como nombre accesible (botón de icono) y la
+     marca puede encogerse; en el pie nada impone un ancho mínimo. Desde 390 px, sin cambios. */
+  @media (max-width: 389.98px) {
+    .sh-bar {
+      gap: var(--space-3);
+    }
+    .sh-brand {
+      flex: 0 1 auto;
+      min-width: 0;
+      gap: 8px;
+    }
+    .sh-wordmark {
+      min-width: 0;
+      font-size: clamp(0.8125rem, 4.1vw, 0.9375rem);
+    }
+    .sh-menu-btn {
+      justify-content: center;
+      width: var(--control-h);
+      padding: 0;
+    }
+    .sh-menu-btn__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    /* Una sola columna: los 11 huecos de la rejilla de 12 exigían 352 px aunque todo ocupe la fila entera. */
+    .sh-footer {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .sh-footer > *,
+    .sh-footer__name,
+    .sh-footer__note,
+    .sh-credit dd,
+    .sh-credit dt {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  /* Colores forzados: el cursor de la sección activa (fondo de acento) se pinta con Highlight. */
+  @media (forced-colors: active) {
+    .sh-indicator {
+      forced-color-adjust: none;
+      background: Highlight;
+    }
+    .sh-sheet__link[aria-current="true"] {
+      border-left: 2px solid Highlight;
+    }
+  }
+}

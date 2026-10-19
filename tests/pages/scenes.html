@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F1823">
+  <title>Escenas físicas: página de prueba</title>
+  <!-- Página aislada de las escenas (propietario: scenes). Solo recursos locales. -->
+  <link rel="stylesheet" href="../../vendor/fonts.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/scenes.css">
+  <style>
+    /* Maquetación de la página de prueba: solo tokens, sin colores literales. */
+    .demo { max-width: var(--container-max); margin: 0 auto; padding: var(--space-6) var(--gutter) var(--space-8); }
+    .demo-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .demo-head h1 { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--lh-heading); letter-spacing: var(--tracking-heading); }
+    .demo-head p { color: var(--muted); margin-top: var(--space-2); max-width: 60ch; }
+    .demo-actions { display: flex; gap: var(--space-2) var(--space-3); flex-wrap: wrap; align-items: end; }
+    .demo-btn {
+      min-height: var(--control-h); padding: 0 var(--space-4); border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+      font: inherit; font-size: var(--text-sm); cursor: pointer;
+    }
+    .demo-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); }
+    .demo-field { display: grid; gap: var(--space-1); min-width: 220px; font-size: var(--text-sm); color: var(--muted); }
+    .demo-field input[type="range"] { accent-color: var(--accent); width: 100%; min-height: var(--control-h-sm); }
+    .demo-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-5); }
+    .demo-card {
+      grid-column: span 12; min-width: 0; padding: var(--space-4); border-radius: var(--radius-md);
+      background: var(--glass-b-bg); border: 1px solid var(--glass-b-border); box-shadow: var(--glass-b-highlight);
+      display: grid; gap: var(--space-3); align-content: start;
+    }
+    .demo-head--sub { margin-top: var(--space-8); }
+    .demo-sub { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--lh-heading); }
+    .demo-card h2 { font-family: var(--font-display); font-size: var(--text-lg); line-height: var(--lh-heading); }
+    .demo-card .demo-note { color: var(--muted); font-size: var(--text-sm); }
+    .demo-card .demo-live { color: var(--subtle); font-size: var(--text-xs); min-height: 2.6em; }
+    @media (min-width: 900px) {
+      .demo-card { grid-column: span 6; }
+    }
+  </style>
+</head>
+<body>
+  <main class="demo" id="contenido">
+    <div class="demo-head">
+      <div>
+        <h1>Escenas físicas</h1>
+        <p>Página de prueba de DSL.viz.scenes. Los fotogramas son sintéticos: se integran aquí con RK4 y siguen el contrato de estados y salidas de los modelos.</p>
+      </div>
+      <div class="demo-actions">
+        <button type="button" class="demo-btn" id="btn-theme" data-testid="demo-theme">Tema claro</button>
+        <button type="button" class="demo-btn" id="btn-play" data-testid="demo-play">Reproducir</button>
+        <button type="button" class="demo-btn" id="btn-motion" data-testid="demo-motion" aria-pressed="false">Movimiento reducido</button>
+        <label class="demo-field">Instante de la simulación
+          <input type="range" id="i-time" min="0" max="1" step="0.001" value="0.3" data-testid="demo-time">
+        </label>
+      </div>
+    </div>
+    <div class="demo-grid" id="grid"></div>
+    <div class="demo-head demo-head--sub">
+      <div>
+        <h2 class="demo-sub">Catálogo real</h2>
+        <p>Las mismas escenas alimentadas por DSL.systems.simulate con los parámetros y la entrada por defecto de cada variante (más una variante SIR con distanciamiento).</p>
+      </div>
+    </div>
+    <div class="demo-grid" id="real-grid" data-testid="real-grid"></div>
+    <div class="demo-head demo-head--sub">
+      <div>
+        <h2 class="demo-sub">Casos límite</h2>
+        <p>Estados extremos con valores fijados: telaraña divergente con lecturas de millones, equilibrio junto al origen, ajuste continuo con lecturas enormes y tanques llenos.</p>
+      </div>
+    </div>
+    <div class="demo-grid" id="stress-grid" data-testid="stress-grid"></div>
+  </main>
+
+  <script src="../../js/core/ns.js"></script>
+  <script src="../../js/core/numeric.js"></script>
+  <script src="../../js/core/tf.js"></script>
+  <script src="../../js/core/latex.js"></script>
+  <script src="../../js/systems/registry.js"></script>
+  <script src="../../js/systems/massSpring.js"></script>
+  <script src="../../js/systems/tanks.js"></script>
+  <script src="../../js/systems/rlc.js"></script>
+  <script src="../../js/systems/sir.js"></script>
+  <script src="../../js/systems/market.js"></script>
+  <script src="../../js/viz/scenes/registry.js"></script>
+  <script src="../../js/viz/scenes/massSpring.js"></script>
+  <script src="../../js/viz/scenes/tanks.js"></script>
+  <script src="../../js/viz/scenes/rlc.js"></script>
+  <script src="../../js/viz/scenes/sir.js"></script>
+  <script src="../../js/viz/scenes/market.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var DSL = window.DSL;
+      var util = DSL.util;
+
+      /* ---------------------------------------------------------- entradas (contrato §9.1) */
+      function inputValue(spec, t) {
+        var off = spec.offset || 0;
+        var t0 = spec.t0 || 0;
+        switch (spec.type) {
+          case 'escalon': return off + (t >= t0 ? spec.amplitude : 0);
+          case 'pulso': return off + (t >= t0 && t < t0 + spec.width ? spec.amplitude : 0);
+          case 'senoidal': return off + (t >= t0 ? spec.amplitude * Math.sin(spec.omega * (t - t0)) : 0);
+          default: return off;
+        }
+      }
+
+      var G = 9.81;
+
+      /* ---------------------------------------------------------- casos (fotogramas sintéticos) */
+      var CASES = [
+        {
+          key: 'mass', scene: 'massSpring', variant: 'base', title: 'Masa-resorte-amortiguador',
+          note: 'm = 1 kg, b = 0.6 N·s/m, k = 4 N/m (ζ = 0.15); escalón de 1 N en t = 0.5 s.',
+          params: { m: 1, b: 0.6, k: 4 }, input: { type: 'escalon', amplitude: 1, t0: 0.5 },
+          duration: 14, timeScale: 1, x0: [0, 0],
+          deriv: function (t, x, u, p) { return [x[1], (u - p.b * x[1] - p.k * x[0]) / p.m]; },
+          outputs: function (t, x) { return { x: x[0], v: x[1] }; }
+        },
+        {
+          key: 'tank-lineal', scene: 'tanks', variant: 'lineal', title: 'Tanque lineal',
+          note: 'A = 1 m², R = 2 s/m²; caudal de entrada en escalón de 0.5 m³/s (h∞ = 1 m, τ = 2 s).',
+          params: { A: 1, R: 2 }, input: { type: 'escalon', amplitude: 0.5, t0: 0.5 },
+          duration: 14, timeScale: 1.2, x0: [0],
+          deriv: function (t, x, u, p) { return [(u - x[0] / p.R) / p.A]; },
+          outputs: function (t, x, u, p) { return { h: x[0], qout: x[0] / p.R }; }
+        },
+        {
+          key: 'tank-torricelli', scene: 'tanks', variant: 'torricelli', title: 'Tanque con descarga de Torricelli',
+          note: 'A = 1 m², a = 0.05 m², q₀ = 0.1 m³/s; la entrada es una desviación sobre q₀ (+0.04 m³/s en t = 9 s).',
+          params: { A: 1, a: 0.05, qin0: 0.1 }, input: { type: 'escalon', amplitude: 0.04, t0: 9 },
+          duration: 22, timeScale: 1.5, x0: [0.02], deviation: true,
+          deriv: function (t, x, u, p) { return [(p.qin0 + u - p.a * Math.sqrt(2 * G * Math.max(x[0], 0))) / p.A]; },
+          outputs: function (t, x, u, p) { return { h: x[0], qout: p.a * Math.sqrt(2 * G * Math.max(x[0], 0)) }; }
+        },
+        {
+          key: 'tank-cascada', scene: 'tanks', variant: 'cascada', title: 'Dos tanques en cascada',
+          note: 'A₁ = 1 m², R₁ = 1 s/m², A₂ = 1.5 m², R₂ = 1.2 s/m²; escalón de 0.5 m³/s.',
+          params: { A1: 1, R1: 1, A2: 1.5, R2: 1.2 }, input: { type: 'escalon', amplitude: 0.5, t0: 0.5 },
+          duration: 16, timeScale: 1.2, x0: [0, 0],
+          deriv: function (t, x, u, p) { return [(u - x[0] / p.R1) / p.A1, (x[0] / p.R1 - x[1] / p.R2) / p.A2]; },
+          outputs: function (t, x) { return { h1: x[0], h2: x[1] }; }
+        },
+        {
+          key: 'rlc', scene: 'rlc', variant: 'serie', title: 'Circuito RLC serie',
+          note: 'R = 1 Ω, L = 0.5 H, C = 0.1 F (ζ ≈ 0.22); escalón de 1 V en t = 0.3 s.',
+          params: { R: 1, L: 0.5, C: 0.1 }, input: { type: 'escalon', amplitude: 1, t0: 0.3 },
+          duration: 9, timeScale: 0.8, x0: [0, 0],
+          deriv: function (t, x, u, p) { return [(u - p.R * x[0] - x[1]) / p.L, x[0] / p.C]; },
+          outputs: function (t, x) { return { vC: x[1], i: x[0] }; }
+        },
+        {
+          key: 'sir', scene: 'sir', variant: 'base', title: 'Epidemia SIR',
+          note: 'β = 0.3 /día, γ = 0.1 /día (R₀ = 3), N = 10 000, I₀ = 10.',
+          params: { beta: 0.3, gamma: 0.1, N: 10000, I0: 10 }, input: { type: 'ninguna' },
+          duration: 160, timeScale: 12, x0: [9990, 10, 0],
+          deriv: function (t, x, u, p) {
+            var inf = p.beta * x[0] * x[1] / p.N;
+            return [-inf, inf - p.gamma * x[1], p.gamma * x[1]];
+          },
+          outputs: function (t, x) { return { S: x[0], I: x[1], R: x[2] }; }
+        },
+        {
+          key: 'market-telarana', scene: 'market', variant: 'telarana', title: 'Mercado: telaraña',
+          note: 'Qd = 10 − P, Qs = 1 + 0.8·P(k−1), P₀ = 8; d/b = 0.8 < 1: converge a P* = 5.',
+          params: { a: 10, b: 1, c: 1, d: 0.8, P0: 8 }, input: { type: 'ninguna' },
+          duration: 24, timeScale: 2, discrete: true, x0: [8],
+          next: function (k, x, u, p) { return [(p.a + u - p.c - p.d * x[0]) / p.b]; },
+          outputs: function (k, x, u, p, prev) {
+            return { P: x[0], Qd: p.a + u - p.b * x[0], Qs: p.c + p.d * (prev === undefined ? x[0] : prev) };
+          }
+        },
+        {
+          key: 'market-walras', scene: 'market', variant: 'walras', title: 'Mercado: ajuste de precio',
+          note: 'dP/dt = α (Qd − Qs) con α = 0.5, P₀ = 2; la demanda sube D = 2 en t = 8 s.',
+          params: { a: 10, b: 1, c: 1, d: 0.8, alpha: 0.5, P0: 2 }, input: { type: 'escalon', amplitude: 2, t0: 8 },
+          duration: 18, timeScale: 1.5, x0: [2],
+          deriv: function (t, x, u, p) { return [p.alpha * ((p.a + u - p.b * x[0]) - (p.c + p.d * x[0]))]; },
+          outputs: function (t, x, u, p) { return { P: x[0], Qd: p.a + u - p.b * x[0], Qs: p.c + p.d * x[0] }; }
+        }
+      ];
+
+      /* ---------------------------------------------------------- trayectorias (RK4 de paso fijo) */
+      function rk4(c, t, x, h) {
+        var u0 = inputValue(c.input, t);
+        var uh = inputValue(c.input, t + h / 2);
+        var u1 = inputValue(c.input, t + h);
+        var k1 = c.deriv(t, x, u0, c.params);
+        var x2 = x.map(function (v, i) { return v + h / 2 * k1[i]; });
+        var k2 = c.deriv(t + h / 2, x2, uh, c.params);
+        var x3 = x.map(function (v, i) { return v + h / 2 * k2[i]; });
+        var k3 = c.deriv(t + h / 2, x3, uh, c.params);
+        var x4 = x.map(function (v, i) { return v + h * k3[i]; });
+        var k4 = c.deriv(t + h, x4, u1, c.params);
+        return x.map(function (v, i) { return v + h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]); });
+      }
+
+      function precompute(c) {
+        var samples = [];
+        if (c.discrete) {
+          var x = c.x0.slice();
+          var prev;
+          for (var k = 0; k <= c.duration; k++) {
+            var u = inputValue(c.input, k);
+            samples.push({ t: k, state: x.slice(), u: u, outputs: c.outputs(k, x, u, c.params, prev) });
+            prev = x[0];
+            x = c.next(k, x, u, c.params);
+          }
+          return samples;
+        }
+        var n = 3000;
+        var h = c.duration / n;
+        var xs = c.x0.slice();
+        for (var i = 0; i <= n; i++) {
+          var t = i * h;
+          var ui = inputValue(c.input, t);
+          samples.push({ t: t, state: xs.slice(), u: ui, outputs: c.outputs(t, xs, ui, c.params) });
+          xs = rk4(c, t, xs, h);
+        }
+        return samples;
+      }
+
+      /** Fotograma del contrato en el instante t (interpolación lineal; discreto: periodo entero). */
+      function frameAt(c, t, dt) {
+        var s = c.samples;
+        if (c.discrete) {
+          var k = Math.max(0, Math.min(s.length - 1, Math.floor(t + 1e-9)));
+          var sk = s[k];
+          return { t: k, dt: dt, state: sk.state.slice(), outputs: Object.assign({}, sk.outputs), params: Object.assign({}, c.params), input: { type: c.input.type, value: sk.u }, variant: c.variant };
+        }
+        var f = Math.max(0, Math.min(1, t / c.duration)) * (s.length - 1);
+        var i = Math.min(s.length - 2, Math.floor(f));
+        var a = f - i;
+        var A = s[i];
+        var B = s[i + 1];
+        var state = A.state.map(function (v, j) { return v + (B.state[j] - v) * a; });
+        var outputs = {};
+        Object.keys(A.outputs).forEach(function (key) { outputs[key] = A.outputs[key] + (B.outputs[key] - A.outputs[key]) * a; });
+        return { t: t, dt: dt, state: state, outputs: outputs, params: Object.assign({}, c.params), input: { type: c.input.type, value: inputValue(c.input, t) }, variant: c.variant };
+      }
+
+      /* ---------------------------------------------------------- montaje */
+      var grid = document.getElementById('grid');
+      var cases = [];
+      CASES.forEach(function (c) {
+        var titleId = util.uid('demo-t');
+        var stage = util.h('div', { class: 'sc-stage', 'data-testid': 'demo-stage-' + c.key });
+        var live = util.h('p', { class: 'demo-live', 'data-testid': 'demo-live-' + c.key });
+        var card = util.h('section', { class: 'demo-card', 'aria-labelledby': titleId, 'data-testid': 'demo-card-' + c.key },
+          util.h('h2', { id: titleId, text: c.title }),
+          util.h('p', { class: 'demo-note', text: c.note }),
+          stage, live);
+        grid.appendChild(card);
+        c.samples = precompute(c);
+        c.stage = stage;
+        c.live = live;
+        if (!DSL.viz.scenes.has(c.scene)) {
+          stage.appendChild(util.h('p', { class: 'demo-note', text: 'Escena «' + c.scene + '» no registrada.' }));
+          return;
+        }
+        // modelo mínimo con hints/deriv para el caso de Torricelli (entrada como desviación sobre q₀)
+        var model = c.deviation ? {
+          id: 'tanks',
+          deriv: function (t, x, u, p) { return c.deriv(t, x, u, p); }
+        } : null;
+        c.inst = DSL.viz.scenes.create(c.scene, stage, { model: model, variant: c.variant, params: c.params, testid: 'sc-demo-' + c.key });
+        c.simT = 0;
+        cases.push(c);
+      });
+
+      function showLive(c) {
+        c.live.textContent = c.inst.summary();
+      }
+
+      /* ---------------------------------------------------------- catálogo real (DSL.systems) */
+      var REAL = [
+        { key: 'mass', id: 'massSpring' },
+        { key: 'tank-lineal', id: 'tanks', variant: 'lineal' },
+        { key: 'tank-torricelli', id: 'tanks', variant: 'torricelli' },
+        { key: 'tank-cascada', id: 'tanks', variant: 'cascada' },
+        { key: 'rlc', id: 'rlc' },
+        { key: 'sir', id: 'sir' },
+        { key: 'sir-u', id: 'sir', input: { type: 'escalon', amplitude: 0.5, t0: 20 }, extra: ' · distanciamiento u = 50 % desde el día 20' },
+        { key: 'market-telarana', id: 'market', variant: 'telarana' },
+        { key: 'market-walras', id: 'market', variant: 'walras' }
+      ];
+      var realCases = [];
+      var realGrid = document.getElementById('real-grid');
+      if (DSL.systems && typeof DSL.systems.simulate === 'function') {
+        REAL.forEach(function (r) {
+          var model = DSL.systems.get(r.id);
+          if (!model || !model.sceneId || !DSL.viz.scenes.has(model.sceneId)) return;
+          var opts = { variant: r.variant };
+          if (r.input) opts.input = r.input;
+          var sim = DSL.systems.simulate(r.id, opts);
+          var d = DSL.systems.describe(r.id, sim.variant);
+          var titleId = util.uid('real-t');
+          var stage = util.h('div', { class: 'sc-stage', 'data-testid': 'real-stage-' + r.key });
+          var live = util.h('p', { class: 'demo-live', 'data-testid': 'real-live-' + r.key });
+          var note = Object.keys(sim.params).map(function (k) { return k + ' = ' + util.formatNumber(sim.params[k], 4); }).join(', ') +
+            '; entrada «' + sim.input.type + '»' + (r.extra || '') + '.';
+          realGrid.appendChild(util.h('section', { class: 'demo-card', 'aria-labelledby': titleId, 'data-testid': 'real-card-' + r.key },
+            util.h('h2', { id: titleId, text: model.name + ': ' + d.variant.label }),
+            util.h('p', { class: 'demo-note', text: note }),
+            stage, live));
+          var inst = DSL.viz.scenes.create(model.sceneId, stage, { model: model, variant: sim.variant, params: sim.params, testid: 'sc-real-' + r.key });
+          realCases.push({ key: r.key, sim: sim, inst: inst, live: live, discrete: sim.timeDomain === 'discrete' });
+        });
+      }
+
+      /* ---------------------------------------------------------- casos límite (valores fijados) */
+      // Telaraña con las salidas del catálogo (Qd = a − b·P, Qs = c + d·P): P(k) = P* + (−d/b)^k·(P₀ − P*).
+      function cobwebFrames(p, kMax) {
+        var out = [];
+        var Ps = (p.a - p.c) / (p.b + p.d);
+        for (var k = 0; k <= kMax; k++) {
+          var P = Ps + Math.pow(-p.d / p.b, k) * (p.P0 - Ps);
+          out.push({ t: k, dt: 0, state: [P], outputs: { P: P, Qd: p.a - p.b * P, Qs: p.c + p.d * P }, params: p, input: { type: 'ninguna', value: 0 }, variant: 'telarana' });
+        }
+        return out;
+      }
+      function tankFrame(variant, p, t, h, u, extra) {
+        var o = variant === 'cascada' ? { h1: h[0], h2: h[1] } : Object.assign({ h: h[0] }, extra || {});
+        return { t: t, dt: 0, state: h.slice(), outputs: o, params: p, input: { type: 'escalon', value: u }, variant: variant };
+      }
+      var MKT_DIV = { a: 100, b: 2, c: 10, d: 4, P0: 40 };
+      var MKT_ORG = { a: 1, b: 1, c: 0, d: 0.5, P0: 8 };
+      var TK_LIN = { A: 1, R: 2 };
+      var TK_TOR = { A: 1, a: 0.05, qin0: 0.1 };
+      var TK_CAS = { A1: 1, R1: 1, A2: 1.5, R2: 1.2 };
+      var qTor = function (h) { return TK_TOR.a * Math.sqrt(2 * G * h); };
+      var STRESS = [
+        {
+          key: 'market-divergente', scene: 'market', variant: 'telarana', title: 'Telaraña divergente',
+          note: 'a = 100, b = 2, c = 10, d = 4, P₀ = 40, escala del catálogo hasta P = 2·10⁴; en k = 15: P = −819185, Qd = 1638470, Qs = −3276730.',
+          params: MKT_DIV,
+          model: { id: 'market', hints: function () { return { yRange: { P: [-20000, 20000], Qd: [0, 100000], Qs: [0, 100000] } }; } },
+          frames: cobwebFrames(MKT_DIV, 15)
+        },
+        {
+          key: 'market-origen', scene: 'market', variant: 'telarana', title: 'Equilibrio junto al origen',
+          note: 'a = 1, b = 1, c = 0, d = 0.5, P₀ = 8: P* = 0.667 y Q* = 0.333 en una escala de 10 × 6.',
+          params: MKT_ORG, frames: cobwebFrames(MKT_ORG, 12)
+        },
+        {
+          key: 'market-walras-enorme', scene: 'market', variant: 'walras', title: 'Ajuste continuo con lecturas enormes',
+          note: 'Fotograma fijado con P = −819185, Qd = 1638470 y Qs = −3276730 (exceso +4915200).',
+          params: { a: 100, b: 2, c: 10, d: 4, alpha: 0.2, P0: 40 },
+          frames: [
+            { t: 0, dt: 0, state: [40], outputs: { P: 40, Qd: 20, Qs: 170 }, params: { a: 100, b: 2, c: 10, d: 4, alpha: 0.2, P0: 40 }, input: { type: 'ninguna', value: 0 }, variant: 'walras' },
+            { t: 15, dt: 0, state: [-819185], outputs: { P: -819185, Qd: 1638470, Qs: -3276730 }, params: { a: 100, b: 2, c: 10, d: 4, alpha: 0.2, P0: 40 }, input: { type: 'ninguna', value: 0 }, variant: 'walras' }
+          ]
+        },
+        {
+          key: 'tank-lineal-lleno', scene: 'tanks', variant: 'lineal', title: 'Tanque lineal lleno',
+          note: 'A = 1 m², R = 2 s/m², q_in = 0.5 m³/s; h = 1.45 m en un tanque de 1.5 m (h∞ = 1 m bajo el agua).',
+          params: TK_LIN,
+          frames: [tankFrame('lineal', TK_LIN, 0, [0], 0.5, { qout: 0 }), tankFrame('lineal', TK_LIN, 30, [1.45], 0.5, { qout: 0.725 })]
+        },
+        {
+          key: 'tank-torricelli-lleno', scene: 'tanks', variant: 'torricelli', title: 'Tanque de Torricelli lleno',
+          note: 'A = 1 m², a = 0.05 m², q₀ = 0.1 m³/s; h = 0.29 m en un tanque de 0.3 m (h₀ = 0.204 m bajo el agua).',
+          params: TK_TOR, deviation: true,
+          deriv: function (t, x, u, p) { return [(p.qin0 + u - p.a * Math.sqrt(2 * G * Math.max(x[0], 0))) / p.A]; },
+          frames: [tankFrame('torricelli', TK_TOR, 0, [0.02], 0, { qout: qTor(0.02) }), tankFrame('torricelli', TK_TOR, 30, [0.29], 0, { qout: qTor(0.29) })]
+        },
+        {
+          key: 'tank-cascada-lleno', scene: 'tanks', variant: 'cascada', title: 'Dos tanques llenos',
+          note: 'A₁ = 1 m², R₁ = 1 s/m², A₂ = 1.5 m², R₂ = 1.2 s/m², q_in = 0.5 m³/s; h₁ = h₂ = 0.77 m en tanques de 0.8 m.',
+          params: TK_CAS,
+          frames: [tankFrame('cascada', TK_CAS, 0, [0, 0], 0.5), tankFrame('cascada', TK_CAS, 30, [0.77, 0.77], 0.5)]
+        }
+      ];
+      var stressCases = [];
+      var stressGrid = document.getElementById('stress-grid');
+      STRESS.forEach(function (c) {
+        var titleId = util.uid('stress-t');
+        var stage = util.h('div', { class: 'sc-stage', 'data-testid': 'stress-stage-' + c.key });
+        var live = util.h('p', { class: 'demo-live', 'data-testid': 'stress-live-' + c.key });
+        stressGrid.appendChild(util.h('section', { class: 'demo-card', 'aria-labelledby': titleId, 'data-testid': 'stress-card-' + c.key },
+          util.h('h2', { id: titleId, text: c.title }),
+          util.h('p', { class: 'demo-note', text: c.note }),
+          stage, live));
+        var model = c.model || (c.deviation ? { id: 'tanks', deriv: c.deriv } : null);
+        c.inst = DSL.viz.scenes.create(c.scene, stage, { model: model, variant: c.variant, params: c.params, testid: 'sc-stress-' + c.key });
+        c.live = live;
+        stressCases.push(c);
+      });
+
+      /** Repinta los casos límite desde su primer fotograma hasta el último (sin movimiento decorativo). */
+      function stressRender() {
+        stressCases.forEach(function (c) {
+          c.frames.forEach(function (f) { c.inst.render(f); });
+          c.live.textContent = c.inst.summary();
+        });
+      }
+
+      function realFrame(rc, i, dt) {
+        var sim = rc.sim;
+        var outputs = {};
+        Object.keys(sim.outputs).forEach(function (k) { outputs[k] = sim.outputs[k][i]; });
+        return { t: sim.t[i], dt: dt, state: sim.x[i].slice(), outputs: outputs, params: sim.params, input: { type: sim.input.type, value: sim.u[i] }, variant: sim.variant };
+      }
+
+      function realSetFraction(f) {
+        realCases.forEach(function (rc) {
+          var n = rc.sim.t.length;
+          var i = Math.max(0, Math.min(n - 1, Math.round(f * (n - 1))));
+          rc.inst.render(realFrame(rc, 0, 0));
+          if (rc.discrete) { for (var k = 1; k <= i; k++) rc.inst.render(realFrame(rc, k, 0)); }
+          else rc.inst.render(realFrame(rc, i, 0));
+          rc.live.textContent = rc.inst.summary();
+        });
+      }
+
+      /** Lleva todas las escenas al instante relativo f ∈ [0, 1] (los discretos pasan por cada periodo). */
+      function setFraction(f) {
+        cases.forEach(function (c) {
+          var t = f * c.duration;
+          if (c.discrete) {
+            c.inst.render(frameAt(c, 0, 0));
+            for (var k = 1; k <= Math.floor(t); k++) c.inst.render(frameAt(c, k, 0));
+          } else {
+            c.inst.render(frameAt(c, 0, 0));
+            c.inst.render(frameAt(c, t, 0));
+          }
+          c.simT = t;
+          showLive(c);
+        });
+        realSetFraction(f);
+      }
+
+      var speed = 1;
+      var lp = util.loop(function (dt) {
+        cases.forEach(function (c) {
+          c.simT += dt * c.timeScale * speed;
+          if (c.simT > c.duration) c.simT = 0;
+          c.inst.render(frameAt(c, c.simT, dt));
+        });
+        timeInput.value = String(cases.length ? cases[0].simT / cases[0].duration : 0);
+      }, { maxDt: 0.1 });
+
+      var timeInput = document.getElementById('i-time');
+      timeInput.addEventListener('input', function () { setFraction(Number(timeInput.value)); });
+
+      var playBtn = document.getElementById('btn-play');
+      playBtn.addEventListener('click', function () {
+        if (lp.isRunning()) {
+          lp.stop();
+          playBtn.textContent = 'Reproducir';
+          cases.forEach(showLive);
+        } else {
+          lp.start();
+          playBtn.textContent = 'Pausar';
+        }
+      });
+
+      var themeBtn = document.getElementById('btn-theme');
+      themeBtn.addEventListener('click', function () {
+        var next = DSL.prefs.toggleTheme();
+        themeBtn.textContent = next === 'dark' ? 'Tema claro' : 'Tema oscuro';
+      });
+
+      var motionBtn = document.getElementById('btn-motion');
+      motionBtn.addEventListener('click', function () {
+        var on = motionBtn.getAttribute('aria-pressed') !== 'true';
+        motionBtn.setAttribute('aria-pressed', String(on));
+        DSL.prefs.setReducedMotion(on ? true : null);
+      });
+
+      /** Coste de render(): n fotogramas por escena; JS solo y JS + estilo/maquetación forzados. */
+      function measure(n) {
+        var out = {};
+        cases.forEach(function (c) {
+          c.inst.render(frameAt(c, 0, 0));
+          var js = [];
+          var full = [];
+          for (var i = 1; i <= n; i++) {
+            var t = c.discrete ? Math.floor((i / n) * c.duration) : (i / n) * c.duration;
+            var fr = frameAt(c, t, 1 / 60);
+            var a = performance.now();
+            c.inst.render(fr);
+            var b = performance.now();
+            c.inst.el.getBoundingClientRect();
+            var d = performance.now();
+            js.push(b - a);
+            full.push(d - a);
+          }
+          function stats(arr) {
+            var s = arr.slice().sort(function (x, y) { return x - y; });
+            var sum = s.reduce(function (acc, v) { return acc + v; }, 0);
+            return { mean: sum / s.length, median: s[Math.floor(s.length / 2)], p95: s[Math.floor(s.length * 0.95)], max: s[s.length - 1] };
+          }
+          out[c.key] = { js: stats(js), withLayout: stats(full) };
+        });
+        return out;
+      }
+
+      window.__scenes = {
+        cases: cases,
+        real: { cases: realCases, setFraction: realSetFraction },
+        stress: { cases: stressCases, render: stressRender },
+        setFraction: setFraction,
+        frameAt: frameAt,
+        measure: measure,
+        play: function () { if (!lp.isRunning()) playBtn.click(); },
+        pause: function () { if (lp.isRunning()) playBtn.click(); },
+        setSpeed: function (x) { speed = x; },
+        /** Repinta n veces el mismo instante con dt > 0: solo puede cambiar el movimiento decorativo. */
+        hold: function (n, dt) {
+          for (var i = 0; i < n; i++) {
+            cases.forEach(function (c) { c.inst.render(frameAt(c, c.simT, dt)); });
+          }
+        },
+        /** Avanza n fotogramas sintéticos de dt segundos reales (movimiento decorativo determinista). */
+        advance: function (n, dt) {
+          for (var i = 0; i < n; i++) {
+            cases.forEach(function (c) {
+              c.simT = Math.min(c.duration, c.simT + dt * c.timeScale);
+              c.inst.render(frameAt(c, c.simT, dt));
+            });
+          }
+          cases.forEach(showLive);
+        }
+      };
+
+      setFraction(Number(timeInput.value));
+      stressRender();
+      document.documentElement.setAttribute('data-ready', 'true');
+    })();
+  </script>
+</body>
+</html>

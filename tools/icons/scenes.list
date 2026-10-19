@@ -1,0 +1,3 @@
+# tools/icons/scenes.list — Propietario: scenes.
+# Las escenas (js/viz/scenes/*.js) dibujan todo en SVG propio y no usan iconos de Lucide.
+# Un nombre de Lucide por línea si alguna vez hiciera falta. Tras editar: node tools/icons.mjs
