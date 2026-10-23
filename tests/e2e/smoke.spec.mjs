@@ -55,7 +55,7 @@ test.describe('humo', () => {
     expect(info.chart).toBe(true);
     expect(info.katex).toBe(true);
     expect(info.icons).toBeGreaterThanOrEqual(40);
-    expect(info.handles).toEqual(['concepts', 'gallery', 'hero', 'shell-footer', 'shell-header', 'tfengine', 'wizard']);
+    expect(info.handles).toEqual(['bikeLab', 'concepts', 'gallery', 'hero', 'shell-footer', 'shell-header', 'tfengine', 'wizard']);
   });
 
   test('KaTeX dibuja con sus fuentes locales', async ({ page, gotoApp }) => {

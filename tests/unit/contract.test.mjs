@@ -33,12 +33,12 @@ const EXPECTED_SCRIPTS = [
   'js/viz/scenes/sir.js', 'js/viz/scenes/market.js',
   'js/anim/pelucaveParams.js', 'js/anim/pelucaveAsset.js', 'js/anim/pelucaveTransition.js', 'js/anim/pelucaveOverlay.js',
   'js/sections/hero.js', 'js/sections/concepts.js', 'js/sections/wizard.js', 'js/sections/gallery.js',
-  'js/sections/tfengine.js', 'js/app.js',
+  'js/sections/bikelab.js', 'js/sections/tfengine.js', 'js/app.js',
 ];
 const EXPECTED_STYLES = [
   'vendor/fonts.css', 'vendor/katex/katex.min.css', 'css/tokens.css', 'css/base.css', 'css/components.css',
   'css/shell.css', 'css/charts.css', 'css/scenes.css', 'css/pelucave.css', 'css/sections/hero.css', 'css/sections/concepts.css',
-  'css/sections/wizard.css', 'css/sections/gallery.css', 'css/sections/tfengine.css',
+  'css/sections/wizard.css', 'css/sections/gallery.css', 'css/sections/bikelab.css', 'css/sections/tfengine.css',
 ];
 
 function walk(dir, ext) {
@@ -63,8 +63,10 @@ describe('index.html', () => {
     for (const f of [...scripts, ...styles]) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
   });
   test('cinco secciones con su montaje y su destino aria-labelledby', () => {
-    for (const [id, mount] of [['inicio', 'hero'], ['conceptos', 'concepts'], ['modelado', 'wizard'], ['galeria', 'gallery'], ['transferencia', 'tfengine']]) {
-      const re = new RegExp(`<section id="${id}"[^>]*aria-labelledby="${id}-title"[^>]*>\\s*<div data-mount="${mount}"></div>\\s*</section>`);
+    // #galeria lleva un segundo montaje tras el de la galería: bikeLab, el laboratorio de la bicicleta.
+    for (const [id, mount, extra] of [['inicio', 'hero'], ['conceptos', 'concepts'], ['modelado', 'wizard'], ['galeria', 'gallery', 'bikeLab'], ['transferencia', 'tfengine']]) {
+      const tail = extra ? `\\s*(?:<!--[^>]*-->\\s*)?<div data-mount="${extra}"></div>` : '';
+      const re = new RegExp(`<section id="${id}"[^>]*aria-labelledby="${id}-title"[^>]*>\\s*<div data-mount="${mount}"></div>${tail}\\s*</section>`);
       assert.match(html, re, id);
     }
   });
@@ -85,7 +87,7 @@ describe('scripts propios', () => {
       assert.doesNotThrow(() => env.load([f]), `${f} falla al cargarse`);
     }
     const DSL = env.window.DSL;
-    for (const key of ['hero', 'concepts', 'wizard', 'gallery', 'tfengine']) {
+    for (const key of ['hero', 'concepts', 'wizard', 'gallery', 'bikeLab', 'tfengine']) {
       assert.equal(typeof DSL.sections[key]?.mount, 'function', `DSL.sections.${key}.mount`);
     }
     assert.equal(typeof DSL.ui.shell?.mountHeader, 'function', 'DSL.ui.shell.mountHeader');

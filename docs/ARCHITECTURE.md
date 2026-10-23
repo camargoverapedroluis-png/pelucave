@@ -26,6 +26,7 @@ Contents: §1 Roles and ownership · §2 File tree · §3 Load order and loading
 | `hero-concepts` | Sections `#inicio` and `#conceptos` | `hero-`, `cc-` | `hero-`, `cc-` |
 | `wizard` | Section `#modelado` | `wz-` | `wz-` |
 | `gallery` | Section `#galeria` | `gl-` | `gl-` |
+| `bikelab` | Laboratorio de la bicicleta: second mount inside `#galeria` (`docs/api/bikelab.md`) | `bk-` | `bk-` |
 | `tfengine` | Section `#transferencia` | `tf-` | `tf-` |
 | `integrator` | Final build, cross-section e2e, a11y and responsive checks | — | — |
 | `anim` | Pelucave transition: the kinematics calibrated in the sibling harness, ported 1:1 (§20) | `pv-` | `pv-` |
@@ -68,6 +69,7 @@ css/sections/hero.css              hero-concepts  hero-*
 css/sections/concepts.css          hero-concepts  cc-*
 css/sections/wizard.css            wizard         wz-*
 css/sections/gallery.css           gallery        gl-*
+css/sections/bikelab.css           bikelab        bk-* (laboratorio de la bicicleta, segunda tarjeta de #galeria)
 css/sections/tfengine.css          tfengine       tf-*
 
 js/core/ns.js                      architect      window.DSL, bus, prefs, util (§7)
@@ -100,6 +102,7 @@ js/sections/hero.js                hero-concepts  DSL.sections.hero
 js/sections/concepts.js            hero-concepts  DSL.sections.concepts
 js/sections/wizard.js              wizard         DSL.sections.wizard
 js/sections/gallery.js             gallery        DSL.sections.gallery
+js/sections/bikelab.js             bikelab        DSL.sections.bikeLab (segundo montaje de #galeria; docs/api/bikelab.md)
 js/sections/tfengine.js            tfengine       DSL.sections.tfengine
 js/app.js                          design-system  boot (§6). The architect's stub is already functional
 
@@ -301,6 +304,7 @@ DSL.sections.<key> = {
 | `concepts` | `#conceptos` | `<h2 id="conceptos-title">` | hero-concepts |
 | `wizard` | `#modelado` | `<h2 id="modelado-title">` | wizard |
 | `gallery` | `#galeria` | `<h2 id="galeria-title">` | gallery |
+| `bikeLab` | `#galeria` (second `[data-mount]`, after `gallery`) | `<h3>` inside its own `article` (the section keeps the gallery's `h2`) | bikelab |
 | `tfengine` | `#transferencia` | `<h2 id="transferencia-title">` | tfengine |
 
 - `index.html` fixes `<section id aria-labelledby="<id>-title" data-testid="section-<id>" class="app-section">`. The module renders the heading with that id.

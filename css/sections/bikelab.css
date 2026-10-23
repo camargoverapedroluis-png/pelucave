@@ -1,0 +1,840 @@
+/*
+ * css/sections/bikelab.css — Propietario: bikelab.
+ * Laboratorio avanzado de la bicicleta de doble suspensión (segundo montaje de #galeria, prefijo bk-):
+ * cabecera, visor (escena en canvas de nivel C + tres gráficas), dock de transporte y freno (nivel A),
+ * paneles de parámetros y lecturas (nivel B), funciones de transferencia (vista algebraica) y diagrama de
+ * bloques en SVG con panel de detalle. Reglas dentro de @layer sections. Solo tokens de css/tokens.css
+ * (los dos tokens propios del marco, --bk-frame y --bk-frame-edge, viven allí). Especificidad ≤ 0,2,0.
+ *
+ *   ┌ cabecera: icono + h3 + resumen + chips ───────────────────────────────────────────┐
+ *   │ herramientas: zoom al marco · capas de vectores                                    │
+ *   ├ escena (canvas, 7fr) ─────────────────────┬ gráficas (5fr): Δx · θ · F_s ─────────┤
+ *   │ dock pegado abajo: transporte · Frenar                                            │
+ *   ├ Ciclista y movimiento │ Terreno │ Suspensión │ Control │ Lecturas en vivo (ancho) ┤
+ *   ├ Funciones de transferencia: [Vista algebraica | Diagrama de bloques] · veredicto  │
+ *   │ tarjetas de ecuaciones o SVG del lazo · panel de detalle del bloque elegido        │
+ *   └────────────────────────────────────────────────────────────────────────────────────┘
+ */
+@layer sections {
+  .bk {
+    --bk-plot-min: 150px;
+    display: grid;
+    gap: var(--space-6);
+    min-width: 0;
+    margin-top: var(--space-8);
+    padding-top: var(--space-7);
+    border-top: 1px solid var(--line);
+  }
+  /* Antes del inicio perezoso: altura aproximada del laboratorio construido, para que la página no salte. */
+  .bk.is-pending {
+    min-height: 120rem;
+  }
+  /* Ningún hijo de las rejillas puede ensanchar la página: lo ancho (SVG del diagrama, fórmulas largas)
+     se desplaza dentro de su caja. */
+  .bk > *,
+  .bk-tf > *,
+  .bk-algebra > *,
+  .bk-eq > *,
+  .bk-detail > *,
+  .bk-panels > *,
+  .bk-main > * {
+    min-width: 0;
+  }
+
+  /* ---------------------------------------------------------------- cabecera */
+  .bk-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-3) var(--space-4);
+    min-width: 0;
+  }
+  .bk-head__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .bk-head__main {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .bk-head__title {
+    padding-top: 6px;
+    text-wrap: balance;
+  }
+  .bk-lead {
+    max-width: 72ch;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-body);
+  }
+  .bk-head__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    max-width: 22rem;
+    padding-top: 8px;
+  }
+
+  /* ---------------------------------------------------------------- herramientas del visor */
+  .bk-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    min-width: 0;
+  }
+  .bk-layers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    min-width: 0;
+  }
+  .bk-layers__title {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+  }
+  /* Cada capa lleva un punto del color de su vector (forma + texto, nunca solo color: el estado lo da aria-pressed). */
+  .bk-layer {
+    --bk-layer-color: var(--muted);
+  }
+  .bk-layer--weight { --bk-layer-color: var(--c-pole); }
+  .bk-layer--normal { --bk-layer-color: var(--c-out); }
+  .bk-layer--spring { --bk-layer-color: var(--c-zero); }
+  .bk-layer--inertia { --bk-layer-color: var(--accent); }
+  .bk-layer::before {
+    content: '';
+    display: inline-block;
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-inline-end: var(--space-2);
+    border-radius: 50%;
+    background: var(--bk-layer-color);
+    box-shadow: 0 0 0 1px var(--line-strong);
+  }
+  .bk-layer[aria-pressed="false"]::before {
+    background: transparent;
+  }
+  .bk-layer[aria-pressed="false"] {
+    color: var(--muted);
+  }
+
+  /* ---------------------------------------------------------------- visor */
+  .bk-viewer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .bk-main {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .bk-scenewrap {
+    position: relative;
+    min-width: 0;
+    align-self: stretch;
+  }
+  /* Nivel C: los datos del canvas nunca van sobre vidrio. */
+  .bk-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 15rem;
+    min-height: 300px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--c-plot-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+  }
+  .bk-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .bk-charts {
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .bk-charts > .bk-chart {
+    --ch-plot-min-height: var(--bk-plot-min);
+    aspect-ratio: auto;
+  }
+
+  /* Aviso de caída: capa sobre la escena (nivel A, único vidrio de la zona). */
+  .bk-fall {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: var(--z-raised);
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+    width: min(26rem, calc(100% - 2 * var(--space-4)));
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--glass-a-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-a-bg);
+    box-shadow: var(--glass-a-highlight), var(--shadow-popover), inset 3px 0 0 var(--danger);
+    -webkit-backdrop-filter: blur(var(--glass-blur-tip));
+    backdrop-filter: blur(var(--glass-blur-tip));
+    color: var(--ink);
+    transform: translate(-50%, -50%);
+  }
+  .bk-fall[hidden] {
+    display: none;
+  }
+  .bk-fall__icon {
+    flex: none;
+    color: var(--danger);
+  }
+  .bk-fall__body {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .bk-fall__title {
+    font-size: var(--text-base);
+    line-height: var(--lh-ui);
+  }
+  .bk-fall__text {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  .bk-fall__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding-top: var(--space-1);
+  }
+
+  /* Dock de transporte (nivel A): se queda al pie de la ventana mientras el visor está a la vista. */
+  .bk-dock {
+    position: sticky;
+    bottom: var(--space-3);
+    z-index: var(--z-dock);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+    border-radius: var(--radius-md);
+  }
+  .bk-dock > .ds-transport {
+    flex: 1 1 24rem;
+    min-width: 0;
+  }
+  .bk-brake {
+    flex: none;
+  }
+  .bk-brake[aria-pressed="true"],
+  .bk-brake.is-braking {
+    background: var(--danger-soft);
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px var(--danger);
+  }
+
+  /* «Ver datos» de cada gráfica, en una fila bajo el visor. */
+  .bk-data {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: var(--space-2) var(--space-4);
+    min-width: 0;
+  }
+  .bk-data:empty {
+    display: none;
+  }
+  .bk-data > .ch-data {
+    min-width: 0;
+  }
+  .bk-data > .ch-data:has(> [aria-expanded="true"]) {
+    flex-basis: 100%;
+  }
+
+  /* ---------------------------------------------------------------- paneles */
+  .bk-panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .bk-panel {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+  .bk-panel--read {
+    grid-column: 1 / -1;
+  }
+  .bk-panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-3);
+    min-height: var(--control-h-sm);
+    min-width: 0;
+  }
+  .bk-panel__title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--ink);
+  }
+  .bk-panel__title .ds-icon {
+    color: var(--accent);
+  }
+  .bk-sliders {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .bk-sliders .ds-slider__head {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+  .bk-sliders .ds-slider__value {
+    margin-inline-start: auto;
+  }
+  .bk-readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .bk-readout {
+    position: relative;
+  }
+  .bk-readout .ds-readout__label {
+    display: block;
+  }
+  .bk-readout:has(.ds-help) .ds-readout__label::before {
+    content: '';
+    float: right;
+    width: 22px;
+    height: 1px;
+  }
+  .bk-readout .ds-readout__sym {
+    display: inline-block;
+    margin-inline-end: calc(var(--text-xs) * 0.45);
+  }
+  .bk-readout .ds-readout__label .ds-help {
+    position: absolute;
+    top: calc(var(--space-3) - 5px);
+    right: calc(var(--space-4) - 8px);
+    margin: 0;
+  }
+  @media (pointer: coarse) {
+    .bk-readout .ds-readout__label .ds-help {
+      top: calc(var(--space-3) - 13px);
+      right: calc(var(--space-4) - 16px);
+    }
+  }
+  .bk-readout .ds-readout__value {
+    white-space: normal;
+    flex-wrap: wrap;
+    column-gap: calc(0.3em + var(--ds-readout-sep));
+  }
+
+  /* ---------------------------------------------------------------- funciones de transferencia */
+  .bk-tf {
+    display: grid;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .bk-tf__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-5);
+    min-width: 0;
+  }
+  .bk-tf__head > div:first-child {
+    display: grid;
+    gap: var(--space-2);
+    flex: 1 1 28rem;
+    min-width: 0;
+  }
+  .bk-tf__title {
+    color: var(--ink);
+    font-size: var(--text-lg);
+    font-family: var(--font-display);
+    font-weight: var(--fw-display);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .bk-tf__lead {
+    max-width: 72ch;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-body);
+  }
+  .bk-tf__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .bk-seg-wrap {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding: 3px;
+    margin: -3px;
+  }
+  .bk-seg-wrap > .ds-seg {
+    min-width: min-content;
+  }
+  .bk-seg-wrap .ds-seg__opt {
+    min-width: min-content;
+    padding-block: 3px;
+    text-align: center;
+    white-space: normal;
+  }
+  .bk-verdict:empty {
+    display: none;
+  }
+  .bk-algebra {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .bk-algebra[hidden],
+  .bk-diagrambox[hidden] {
+    display: none;
+  }
+  /* Tarjeta de un bloque (nivel B). La elegida lleva la barra de acento. */
+  .bk-eq {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--glass-b-border);
+    border-radius: var(--radius-md);
+    background: var(--glass-b-bg);
+    box-shadow: var(--glass-b-highlight);
+    cursor: pointer;
+    transition: background-color var(--dur-hover) var(--ease-out), box-shadow var(--dur-toggle) var(--ease-out);
+  }
+  @media (hover: hover) {
+    .bk-eq:hover {
+      background: var(--glass-b-hover);
+    }
+  }
+  .bk-eq.is-selected {
+    box-shadow: var(--glass-b-highlight), inset 3px 0 0 var(--accent);
+  }
+  .bk-eq--global {
+    grid-column: 1 / -1;
+    cursor: default;
+  }
+  .bk-eq__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    min-width: 0;
+  }
+  .bk-eq__title {
+    flex: 1 1 12rem;
+    min-width: 0;
+    color: var(--ink);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-ui);
+  }
+  .bk-eq__sym {
+    color: var(--accent);
+  }
+  .bk-eq__num .ds-math-block {
+    padding-block: var(--space-1);
+  }
+  .bk-eq__roots,
+  .bk-eq__note {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+  /* Las listas de polos y ceros pueden ser largas: se parten en varias líneas (sin nowrap). */
+  .bk-eq__roots .ds-math,
+  .bk-detail__roots .ds-math {
+    color: var(--ink);
+    white-space: normal;
+  }
+  .bk-eq__roots .katex,
+  .bk-detail__roots .katex {
+    white-space: normal;
+  }
+
+  /* Diagrama de bloques: lienzo sólido (nivel C) con el SVG a todo el ancho. */
+  .bk-diagrambox {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-3);
+    background: var(--c-plot-bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .bk-diagram {
+    display: block;
+    width: 100%;
+    min-width: 34rem;
+    height: auto;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-variant-numeric: var(--font-numeric);
+    overflow: visible;
+  }
+  .bk-diagram__hint {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--lh-ui);
+  }
+  /* Los cables nunca reciben el puntero: los bloques y señales quedan siempre pulsables. */
+  .bk-diagram__wires {
+    pointer-events: none;
+  }
+  .bk-diagram__wire {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.75;
+    stroke-linejoin: round;
+  }
+  .bk-diagram__head {
+    fill: var(--muted);
+  }
+  .bk-diagram__tap {
+    fill: var(--muted);
+  }
+  /* Flujo de señal: trazo discontinuo que recorre los cables mientras la simulación corre. */
+  .bk-diagram__flow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 4 14;
+    opacity: 0;
+    transition: opacity var(--dur-toggle) var(--ease-out);
+  }
+  .bk.is-live .bk-diagram__flow {
+    opacity: 0.85;
+    animation: bk-flow 1.4s linear infinite;
+  }
+  @keyframes bk-flow {
+    to { stroke-dashoffset: -18; }
+  }
+  .bk-diagram__block rect {
+    fill: var(--surface-2);
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+    transition: fill var(--dur-hover) var(--ease-out), stroke var(--dur-hover) var(--ease-out);
+  }
+  .bk-diagram__sum circle {
+    fill: var(--c-plot-bg);
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+  .bk-diagram__sumx {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.25;
+  }
+  .bk-diagram__text {
+    fill: var(--ink);
+    font-weight: var(--fw-medium);
+  }
+  .bk-diagram__text--block {
+    font-size: 17px;
+    font-style: italic;
+    font-weight: var(--fw-semibold);
+    pointer-events: none;
+  }
+  .bk-diagram__text--sign {
+    font-size: 15px;
+    font-weight: var(--fw-semibold);
+    fill: var(--muted);
+  }
+  .bk-diagram__text--signal {
+    fill: var(--c-out);
+    font-size: 14px;
+    font-style: italic;
+    font-weight: var(--fw-semibold);
+  }
+  .bk-diagram__text--live {
+    fill: var(--muted);
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: var(--fw-regular);
+  }
+  .bk-diagram__text--note {
+    fill: var(--subtle);
+    font-size: 12px;
+  }
+  .bk-diagram__hit {
+    cursor: pointer;
+    outline: none;
+  }
+  .bk-diagram__hitbox {
+    fill: transparent;
+    stroke: none;
+  }
+  .bk-diagram__signal.is-hover .bk-diagram__hitbox,
+  .bk-diagram__signal:focus-visible .bk-diagram__hitbox {
+    fill: var(--accent-soft);
+  }
+  .bk-diagram__hit.is-hover rect,
+  .bk-diagram__hit:focus-visible rect {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .bk-diagram__hit[aria-pressed="true"] rect {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+  .bk-diagram__signal.is-hover text,
+  .bk-diagram__signal:focus-visible text {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .bk-diagram__signal[aria-pressed="true"] .bk-diagram__text--signal {
+    fill: var(--accent);
+  }
+
+  /* Panel de detalle del bloque o señal (nivel B). Al pasar el cursor, vista previa con borde discontinuo. */
+  .bk-detail {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+  .bk-detail:empty {
+    display: none;
+  }
+  .bk-detail.is-preview {
+    border-style: dashed;
+    border-color: var(--accent-line);
+  }
+  .bk-detail__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+  }
+  .bk-detail__title {
+    flex: 1 1 14rem;
+    min-width: 0;
+    color: var(--ink);
+    font-size: var(--text-base);
+  }
+  .bk-detail__sym {
+    color: var(--accent);
+  }
+  .bk-detail__roots,
+  .bk-detail__role {
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-body);
+    max-width: 80ch;
+  }
+  .bk-detail__roots .ds-math {
+    color: var(--ink);
+  }
+  .bk-detail__live {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-2) var(--space-4);
+    min-width: 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--surface-inset);
+  }
+  .bk-detail__live > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .bk-detail__live dt {
+    color: var(--muted);
+    font-size: var(--text-xs);
+    line-height: var(--lh-ui);
+  }
+  .bk-detail__live dd {
+    color: var(--ink);
+    font-size: var(--text-base);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: var(--font-numeric);
+    line-height: var(--lh-ui);
+  }
+  .bk-detail__notes {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding-inline-start: 1.2em;
+    color: var(--muted);
+    font-size: var(--text-sm);
+    line-height: var(--lh-ui);
+  }
+
+  /* ---------------------------------------------------------------- tableta */
+  @media (min-width: 768px) and (max-width: 1279.98px) {
+    .bk.is-pending {
+      min-height: 150rem;
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .bk-main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .bk-charts {
+      grid-template-rows: none;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .bk-charts > .bk-chart {
+      aspect-ratio: 4 / 3;
+    }
+    .bk-head {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+    .bk-head__chips {
+      grid-column: 2;
+      justify-content: flex-start;
+      max-width: none;
+      padding-top: 0;
+    }
+  }
+
+  /* ---------------------------------------------------------------- teléfono */
+  @media (max-width: 767.98px) {
+    .bk {
+      gap: var(--space-5);
+      margin-top: var(--space-7);
+      padding-top: var(--space-6);
+    }
+    .bk.is-pending {
+      min-height: 200rem;
+    }
+    .bk-head {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--space-3);
+    }
+    .bk-head__chips {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      max-width: none;
+      padding-top: 0;
+    }
+    .bk-tools {
+      justify-content: flex-start;
+    }
+    .bk-main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .bk-stage {
+      aspect-ratio: 4 / 3;
+      min-height: 260px;
+    }
+    .bk-charts {
+      grid-template-rows: none;
+    }
+    .bk-charts > .bk-chart {
+      aspect-ratio: 16 / 11;
+    }
+    .bk-panels {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .bk-panel {
+      padding: var(--space-4);
+    }
+    .bk-readouts {
+      grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    }
+    .bk-eq {
+      padding: var(--space-3) var(--space-4);
+    }
+    .bk-fall {
+      padding: var(--space-3) var(--space-4);
+    }
+  }
+  @media (max-width: 479.98px) {
+    .bk-seg-wrap > .ds-seg {
+      grid-auto-columns: auto;
+    }
+    .bk-seg-wrap .ds-seg__opt {
+      padding-inline: var(--space-2);
+    }
+  }
+
+  /* ---------------------------------------------------------------- movimiento reducido */
+  @media (prefers-reduced-motion: reduce) {
+    .bk.is-live .bk-diagram__flow {
+      animation: none;
+      opacity: 0.5;
+    }
+  }
+  :root[data-motion="reduce"] .bk.is-live .bk-diagram__flow {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  /* ---------------------------------------------------------------- colores forzados */
+  @media (forced-colors: active) {
+    .bk-diagram__wire,
+    .bk-diagram__sum circle,
+    .bk-diagram__sumx,
+    .bk-diagram__block rect {
+      stroke: CanvasText;
+    }
+    .bk-diagram__head,
+    .bk-diagram__tap {
+      fill: CanvasText;
+    }
+    .bk-diagram__text {
+      fill: CanvasText;
+    }
+    .bk-diagram__hit[aria-pressed="true"] rect {
+      stroke: Highlight;
+      stroke-width: 3;
+    }
+    .bk-eq.is-selected {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+    .bk-layer::before {
+      border: 1px solid ButtonText;
+    }
+  }
+}

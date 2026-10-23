@@ -1,0 +1,15 @@
+# tools/icons/bikelab.list — Propietario: bikelab.
+# Iconos Lucide del laboratorio de la bicicleta (js/sections/bikelab.js). Tras editar: node tools/icons.mjs
+bike
+zoom-in
+octagon-x
+activity
+layers
+sliders-horizontal
+git-branch
+gauge
+sigma
+info
+rotate-ccw
+triangle-alert
+circle-check

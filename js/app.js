@@ -20,6 +20,7 @@
     concepts: 'Conceptos',
     wizard: 'Modelado',
     gallery: 'Galería',
+    bikeLab: 'Laboratorio de la bicicleta',
     tfengine: 'Función de transferencia',
     'shell-header': 'Barra superior',
     'shell-footer': 'Pie de página'

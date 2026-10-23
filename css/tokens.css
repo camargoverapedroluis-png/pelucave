@@ -107,6 +107,8 @@
   --c-series-4: #BBA8E8;
   --c-series-5: #E9A8C9;
   --c-series-6: #C9D58A;
+  --bk-frame: #27323F;              /* laboratorio de la bicicleta: relleno del triángulo principal (grafito) */
+  --bk-frame-edge: #C9D4E0;         /* … y su borde */
   --ghost-opacity: 0.35;            /* opacidad de la curva anterior tras un cambio */
   --chart-line-width: 2;            /* px; número para Chart.js */
   --chart-ref-line-width: 1.25;     /* px; referencias y asíntotas */
@@ -196,6 +198,8 @@
   --c-series-4: #6B55B5;
   --c-series-5: #A83F78;
   --c-series-6: #6B7A1F;
+  --bk-frame: #1F2A36;
+  --bk-frame-edge: #0B1118;
 
   --shadow-popover: 0 8px 24px rgb(16 32 48 / 0.14), 0 1px 3px rgb(16 32 48 / 0.10);
   --shadow-overlay: 0 24px 64px rgb(16 32 48 / 0.20), 0 2px 8px rgb(16 32 48 / 0.12);
