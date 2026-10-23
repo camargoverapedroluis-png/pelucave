@@ -16,6 +16,7 @@ en el clímax y **recupera** con rebote elástico; el ojo y el pelo siguen con i
 | `js/anim/pelucaveParams.js` | `DSL.anim.pelucaveParams`: el JSON exportado por el arnés, congelado en profundidad. **Inmutable**: no se ajusta aquí. `DSL.anim.pelucaveGeometria`: viewBox, línea dental y cajas en reposo del asset (geometría, no calibración) |
 | `js/anim/pelucaveAsset.js` | **GENERADO** por `tools/pelucave.mjs` desde `tools/pelucave/svg-completo.svg`. Trazados `d` por capa, sin presentación. Nunca se edita a mano |
 | `js/anim/pelucaveTransition.js` | `DSL.anim.pelucave`: easings, matrices, timeline puro, montaje del SVG y rig |
+| `js/anim/pelucaveOverlay.js` | `DSL.anim.pelucaveOverlay`: la transición cableada a la navegación (capa fija, salto en el clímax, vuelo de la sección, limpieza) |
 | `css/pelucave.css` | Presentación (prefijo `pv-`): tinta `--pv-ink` (por defecto `--ink`) y papel `--pv-paper` (por defecto `--bg`). Capa `components` |
 | `tools/pelucave.mjs`, `tools/pelucave/svg-completo.svg` | Generador (`npm run pelucave`, `--check`) y asset fuente (logo original, 762×734, 32 paths) |
 | `tests/unit/pelucave.test.mjs` | Pruebas (parámetros, easings contra GSAP, timeline, matrices, asset, rig en el DOM falso) |
@@ -110,8 +111,36 @@ las cajas en reposo de las piezas son constantes (`pelucaveGeometria.bboxReposo`
   Playwright (`node_modules/` ausente) y su descarga de Chromium requiere el visto bueno del usuario. La página
   `tests/pages/pelucave.html` queda lista para ese spec (data-testids `demo-*`, `html[data-ready]`, `window.__pelucave`).
 
-## Pendiente (fases posteriores de la directiva)
+## Cableado en la página (`js/anim/pelucaveOverlay.js`)
 
-El módulo está cargado en `index.html` (define, no monta) pero **todavía no dispara ninguna transición en la
-aplicación**: dónde y cuándo se usa (qué «transición principal» sustituye, qué objeto se expulsa, qué ocurre al
-completar) lo fijan las fases siguientes de la directiva de integración.
+```js
+DSL.anim.pelucaveOverlay.navigate(sectionId) → boolean   // true: la transición se encarga (evitar la navegación por defecto)
+DSL.anim.pelucaveOverlay.isRunning() → boolean
+DSL.anim.pelucaveOverlay.cancel() → boolean               // termina en el acto: sección asentada, capa desmontada
+```
+
+**Disparo.** El ancla «Simular un sistema» del inicio (`js/sections/hero.js`, `data-testid="hero-cta-galeria"`)
+llama a `navigate('galeria')` en su clic y solo evita la navegación por defecto si devuelve `true`. Devuelve
+`false` con movimiento reducido o si falta el módulo (el shell desplaza la página como siempre) y `true`
+mientras ya corre una transición (candado: el clic repetido se ignora). Los enlaces «Galería» de la barra y del
+menú no se tocan.
+
+**Secuencia (1.8 s).**
+
+| Instante | Capa (`div.pv-overlay`, fija, bajo la barra, sin puntero) | Sección `#galeria` |
+|---|---|---|
+| 0 → 0.28 s anticipación | velo `--bg` 0 → 1 (`power2.inOut`); la cabeza se echa atrás | sin tocar |
+| 0.28 → 0.46 s apertura | velo 1; la boca se abre | sin tocar |
+| 0.46 s clímax | `shell.scrollTo('galeria', { instant: true })` detrás del velo; velo 1 → 0 (`power2.out`) | nace en la boca: `transform-origin` = punto de aterrizaje de la trayectoria calibrada; cada cuadro `translate(…) scale(dummyS)` (0.15 → 1, recorrido `distancia 260` / `elevacion −40` u × escala de la cabeza); clase `pv-vuelo` (`will-change`) |
+| 0.81 s recuperación | cierre elástico; fundido de la cabeza en los últimos 0.3 s | asentada: se retiran `transform`, `transform-origin`, la clase y el atributo `style` vacío |
+| 1.80 s fin | `visibility: hidden`, rig destruido, nodo eliminado, candado liberado | recibe el foco (`tabindex="-1"`, sin desplazar) |
+
+La cabeza se dimensiona en px desde el módulo (62 % del alto de la ventana, como mucho el 90 % del ancho) de
+modo que su punto de eyección en reposo cae en el 32 % × 52 % de la ventana; su papel es `--bg`, igual que el
+velo. Una sola lectura de layout (`getBoundingClientRect` de la sección) en el clímax, fuera del bucle. Mientras
+la sección vuela, sus gráficas y escenas se reconstruyen con normalidad (el salto instantáneo dispara su
+inicialización perezosa si aún no había corrido).
+
+**Limpieza garantizada.** Al terminar no queda ningún nodo de la capa en el documento ni ningún estilo en línea
+en la sección; `pointer-events: none` en la capa durante toda la secuencia, así que ni siquiera mientras corre
+bloquea deslizadores, lienzos o botones. `cancel()` fuerza ese estado final en el acto.

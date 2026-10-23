@@ -32,4 +32,35 @@
   .pv-dummy-caja {
     fill: var(--accent);
   }
+
+  /* ---- Capa de navegación (js/anim/pelucaveOverlay.js): bajo la barra fija, nunca recibe el puntero. */
+  .pv-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-header) - 1);
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Velo del color del fondo: tapa la vista mientras la cabeza anticipa y abre; se retira en el clímax. */
+  .pv-overlay-scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    opacity: 0;
+  }
+
+  /* La cabeza se coloca en px desde el módulo (su boca cae en un punto fijo de la ventana). */
+  .pv-overlay-head {
+    position: absolute;
+    --pv-paper: var(--bg);
+  }
+  .pv-overlay-head .pv-root {
+    height: 100%;
+  }
+
+  /* Sección en vuelo (clímax): se escala y traslada desde la boca; la clase se retira al asentarse. */
+  .pv-vuelo {
+    will-change: transform;
+  }
 }

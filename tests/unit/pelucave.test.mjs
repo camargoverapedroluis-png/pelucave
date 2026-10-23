@@ -431,4 +431,112 @@ describe('rig sobre el DOM falso', () => {
     const { DSL } = setup();
     assert.throws(() => DSL.anim.pelucave.createRig(null), /falta el contenedor/);
   });
+
+  test('onUpdate se llama tras cada setTime (scrub y reproducción), no en el inicial', () => {
+    const { DSL, document, env } = setup();
+    const calls = [];
+    const rig = DSL.anim.pelucave.createRig(document.body, { onUpdate: (r, s) => calls.push([r.time(), s.mandAngle]) });
+    assert.deepStrictEqual(calls, []);
+    rig.setTime(0.46);
+    assert.equal(calls.length, 1);
+    near(calls[0][0], 0.46); near(calls[0][1], 32);
+    rig.play();
+    env.frames(3);
+    assert.equal(calls.length, 1 + 1 + 3, 'play → setTime(0) + un setTime por frame');
+    rig.destroy();
+  });
+});
+
+describe('capa de navegación (js/anim/pelucaveOverlay.js)', () => {
+  const NAV = [...FILES, 'js/anim/pelucaveOverlay.js'];
+
+  function page(files = NAV, opts) {
+    const ctx = loadDSL(files, opts);
+    const sec = ctx.document.createElement('section');
+    sec.setAttribute('id', 'galeria');
+    sec.setAttribute('class', 'app-section');
+    ctx.document.body.appendChild(sec);
+    return { ...ctx, sec };
+  }
+
+  test('navigate: capa sobre la vista, candado, salto en el clímax, vuelo de la sección y limpieza total', () => {
+    const { DSL, document, env, sec } = page();
+    const nav = DSL.anim.pelucaveOverlay;
+    assert.equal(nav.isRunning(), false);
+    assert.equal(nav.navigate('no-existe'), false, 'sección inexistente: navegación normal');
+    assert.equal(nav.navigate('galeria'), true);
+    assert.equal(nav.isRunning(), true);
+    const overlays = () => document.querySelectorAll('.pv-overlay');
+    assert.equal(overlays().length, 1);
+    assert.equal(overlays()[0].getAttribute('aria-hidden'), 'true');
+    assert.equal(overlays()[0].querySelectorAll('.pv-root').length, 1, 'la cabeza está dentro de la capa');
+    assert.ok(parseFloat(overlays()[0].querySelector('.pv-overlay-head').style.height) > 400, 'cabeza dimensionada en px');
+    assert.equal(nav.navigate('galeria'), true, 'clic repetido: consumido e ignorado');
+    assert.equal(overlays().length, 1);
+
+    env.frames(20);                                   // ≈ 0.30 s: anticipación y apertura, aún sin saltar
+    assert.equal(document._scrolledTo, undefined, 'todavía no se ha desplazado');
+    assert.equal(sec.style.transform, '');
+    const scrim = overlays()[0].querySelector('.pv-overlay-scrim');
+    assert.equal(scrim.style.opacity, '1.000', 'el velo cubre la vista durante la apertura');
+
+    env.frames(15);                                   // ≈ 0.54 s: clímax
+    assert.equal(document._scrolledTo, sec, 'salto a la sección en el clímax');
+    assert.match(sec.style.transform, /^translate\(-?[\d.]+px, -?[\d.]+px\) scale\(0\.\d+\)$/);
+    assert.match(sec.style.transformOrigin, /px/);
+    assert.ok(sec.classList.contains('pv-vuelo'));
+    assert.ok(parseFloat(scrim.style.opacity) < 1, 'el velo se retira');
+
+    env.frames(25);                                   // ≈ 0.94 s: recuperación, sección asentada
+    assert.equal(sec.style.transform, '');
+    assert.equal(sec.style.transformOrigin, '');
+    assert.ok(!sec.classList.contains('pv-vuelo'));
+    assert.equal(nav.isRunning(), true, 'la cabeza aún se recupera');
+    assert.equal(scrim.style.opacity, '0.000');
+
+    env.frames(80);                                   // > 1.8 s: fin
+    assert.equal(nav.isRunning(), false);
+    assert.equal(overlays().length, 0, 'capa desmontada');
+    assert.equal(sec.getAttribute('style'), null, 'ningún estilo en línea en la sección');
+    assert.equal(sec.getAttribute('tabindex'), '-1');
+    assert.equal(document.activeElement, sec, 'el foco queda en la sección');
+    assert.deepStrictEqual(env.console.error, []);
+
+    assert.equal(nav.navigate('galeria'), true, 'se puede volver a disparar');
+    assert.equal(nav.cancel(), true);
+    assert.equal(nav.isRunning(), false);
+    assert.equal(overlays().length, 0);
+    assert.equal(sec.getAttribute('style'), null);
+  });
+
+  test('con movimiento reducido no interviene (navegación normal)', () => {
+    const { DSL, env } = page(NAV, { media: { '(prefers-reduced-motion: reduce)': true } });
+    assert.equal(DSL.anim.pelucaveOverlay.navigate('galeria'), false);
+    assert.equal(DSL.anim.pelucaveOverlay.isRunning(), false);
+    assert.deepStrictEqual(env.console.error, []);
+  });
+
+  test('«Simular un sistema» del inicio dispara la transición y evita la navegación por defecto', () => {
+    const { DSL, document, env, sec } = page([...NAV, 'js/sections/hero.js']);
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    const handle = DSL.sections.hero.mount(el);
+    const cta = el.querySelector('[data-testid="hero-cta-galeria"]');
+    assert.ok(cta, 'ancla de la galería');
+    assert.equal(cta.getAttribute('href'), '#galeria');
+    const ev = new env.FakeEvent('click', { bubbles: true, cancelable: true });
+    cta.dispatchEvent(ev);
+    assert.equal(ev.defaultPrevented, true);
+    assert.equal(DSL.anim.pelucaveOverlay.isRunning(), true);
+    assert.equal(document.querySelectorAll('.pv-overlay').length, 1);
+    DSL.anim.pelucaveOverlay.cancel();
+    assert.equal(document.activeElement, sec);
+
+    env.setMedia('(prefers-reduced-motion: reduce)', true);
+    const ev2 = new env.FakeEvent('click', { bubbles: true, cancelable: true });
+    cta.dispatchEvent(ev2);
+    assert.equal(ev2.defaultPrevented, false, 'con movimiento reducido el ancla navega sola');
+    handle.destroy();
+    assert.deepStrictEqual(env.console.error, []);
+  });
 });

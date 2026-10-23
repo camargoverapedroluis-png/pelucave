@@ -31,7 +31,7 @@ const EXPECTED_SCRIPTS = [
   'js/systems/rlc.js', 'js/systems/sir.js', 'js/systems/market.js', 'js/systems/pendulum.js',
   'js/viz/scenes/registry.js', 'js/viz/scenes/massSpring.js', 'js/viz/scenes/tanks.js', 'js/viz/scenes/rlc.js',
   'js/viz/scenes/sir.js', 'js/viz/scenes/market.js',
-  'js/anim/pelucaveParams.js', 'js/anim/pelucaveAsset.js', 'js/anim/pelucaveTransition.js',
+  'js/anim/pelucaveParams.js', 'js/anim/pelucaveAsset.js', 'js/anim/pelucaveTransition.js', 'js/anim/pelucaveOverlay.js',
   'js/sections/hero.js', 'js/sections/concepts.js', 'js/sections/wizard.js', 'js/sections/gallery.js',
   'js/sections/tfengine.js', 'js/app.js',
 ];

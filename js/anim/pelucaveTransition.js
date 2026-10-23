@@ -378,7 +378,8 @@
    * createRig(container, opts) → rig. Construye el SVG dentro de `container` y lo deja en reposo.
    * opts: { params = DSL.anim.pelucaveParams, label (role="img" + aria-label; sin él, decorativo),
    *         dummyContent (nodo SVG dibujado en la caja [0, tamano]²; por defecto, la caja del arnés),
-   *         maxDt = 0.1 (recorte del paso de tiempo, en s) }.
+   *         maxDt = 0.1 (recorte del paso de tiempo, en s),
+   *         onUpdate(rig, state) (tras cada setTime, también en scrub; no en el setTime inicial) }.
    * rig: { el, nodes, params, duration, timeline, setTime(t) → state, time(), state(), apply(state),
    *        play({ onComplete?, from = 0 } | onComplete), stop(), reset(), isPlaying(), phaseAt(t?),
    *        ejectionPoint(), destroy() }.
@@ -453,7 +454,9 @@
 
     function setTime(t) {
       time = !(t > 0) ? 0 : t > tl.duration ? tl.duration : t;
-      return applyState(tl.stateAt(time, state));
+      applyState(tl.stateAt(time, state));
+      if (typeof opts.onUpdate === 'function' && rig) opts.onUpdate(rig, state);
+      return state;
     }
 
     var onComplete = null;

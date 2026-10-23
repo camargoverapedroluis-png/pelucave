@@ -30,7 +30,7 @@ La barra superior lleva a las cinco secciones. También se puede entrar directam
 
 | Sección | Qué ofrece |
 |---|---|
-| `#inicio` | Presentación con una escena animada y dos accesos: «Simular un sistema» (galería) y «Obtener G(s) paso a paso» (motor) |
+| `#inicio` | Presentación con una escena animada y dos accesos: «Simular un sistema» (galería, con la transición Pelucave: la cabeza del logo abre la boca y la galería sale expulsada hasta asentarse; con movimiento reducido es un salto directo) y «Obtener G(s) paso a paso» (motor) |
 | `#conceptos` | Cuatro tarjetas con figuras calculadas en vivo: «¿Qué es un sistema dinámico?», «La variable independiente: el tiempo t», «Ecuaciones de representación» y «Linealidad vs. no linealidad» (con superposición y métodos numéricos: Euler, Heun y RK4 frente a RK45 sobre el péndulo no lineal) |
 | `#modelado` | Asistente en cuatro pasos (Delimitar el sistema → Aplicar leyes físicas o principios de conservación → Formular el modelo matemático → Simular y validar) con cuatro ejemplos: masa-resorte, RLC, tanque y SIR. En «Formular el modelo matemático», un ejemplo lineal abre su G(s) en el motor (el SIR, que no es lineal, lleva a «Linealidad vs. no linealidad»); en «Simular y validar», el ejemplo se abre en la galería |
 | `#galeria` | Cinco sistemas simulados en tiempo real, con escena animada, gráficas y controles de parámetros: masa-resorte, tanques (lineal, Torricelli, cascada), circuito RLC, epidemia SIR y mercado (telaraña y ajuste continuo). «Ver G(s) paso a paso» envía el sistema, con sus parámetros, al motor |

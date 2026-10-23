@@ -179,8 +179,14 @@
     var lead = h('p', { class: 'hero-lead', 'data-testid': 'hero-lead' },
       'Modele sistemas mecánicos, hidráulicos, eléctricos, biológicos y económicos, simúlelos en vivo y obtenga su función de transferencia ',
       gs, ' con el procedimiento completo.');
+    /* «Simular un sistema»: si la transición Pelucave está disponible (y no hay movimiento reducido), ella
+       lleva a la galería y se evita la navegación por defecto; si no, el ancla funciona como siempre. */
+    function onSimular(ev) {
+      var nav = DSL.anim && DSL.anim.pelucaveOverlay;
+      if (nav && typeof nav.navigate === 'function' && nav.navigate('galeria')) ev.preventDefault();
+    }
     var actions = h('div', { class: 'hero-actions' },
-      h('a', { class: 'ds-btn ds-btn--primary hero-cta', href: '#galeria', 'data-testid': 'hero-cta-galeria' }, 'Simular un sistema'),
+      h('a', { class: 'ds-btn ds-btn--primary hero-cta', href: '#galeria', 'data-testid': 'hero-cta-galeria', onClick: onSimular }, 'Simular un sistema'),
       h('a', { class: 'ds-btn hero-cta', href: '#transferencia', 'data-testid': 'hero-cta-transferencia' },
         h('span', null, 'Obtener ', h('span', { translate: 'no' }, 'G(s)'), ' paso a paso')));
     var copy = h('div', { class: 'hero-copy' }, title, lead, actions);
