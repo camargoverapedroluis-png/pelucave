@@ -11,11 +11,12 @@
   "scripts": {
     "vendor": "node tools/vendor.mjs",
     "icons": "node tools/icons.mjs",
+    "pelucave": "node tools/pelucave.mjs",
     "build": "node tools/build.mjs",
     "test": "node --test \"tests/unit/**/*.test.mjs\"",
     "test:e2e": "playwright test",
     "crosscheck": "uv run --with numpy --with scipy python tests/crosscheck/run.py",
-    "verify": "npm run vendor && npm run icons && npm run test && npm run crosscheck && npm run build && npm run test:e2e"
+    "verify": "npm run vendor && npm run icons && npm run pelucave && npm run test && npm run crosscheck && npm run build && npm run test:e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

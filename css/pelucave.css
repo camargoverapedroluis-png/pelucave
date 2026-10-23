@@ -1,0 +1,35 @@
+/*
+ * css/pelucave.css — Propietario: anim.
+ * Transición Pelucave (prefijo pv-): el logo se dibuja en «tinta» (--pv-ink, por defecto --ink) y sus
+ * piezas móviles (ojo y arcadas) en «papel» (--pv-paper, por defecto --bg), de modo que leen como recortes
+ * del fondo. Quien lo aloje sobre otra superficie redefine --pv-paper en su contenedor.
+ * El trazo de 1 u en la misma tinta oculta las costuras de antialiasing entre la silueta y los rellenos.
+ * Reglas dentro de @layer components. Solo tokens de css/tokens.css (sin colores literales).
+ * API y ganchos: docs/api/pelucave.md.
+ */
+@layer components {
+  .pv-root {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;   /* el objeto expulsado sale del viewBox hacia +X */
+    pointer-events: none;
+  }
+
+  .pv-silueta,
+  .pv-relleno {
+    fill: var(--pv-ink, var(--ink));
+    stroke: var(--pv-ink, var(--ink));
+    stroke-width: 1;
+  }
+
+  .pv-pieza {
+    fill: var(--pv-paper, var(--bg));
+    stroke: var(--pv-ink, var(--ink));
+    stroke-width: 1;
+  }
+
+  .pv-dummy-caja {
+    fill: var(--accent);
+  }
+}

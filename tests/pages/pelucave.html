@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F1823">
+  <title>Transición Pelucave: página de prueba</title>
+  <!-- Página aislada de la transición Pelucave (propietario: anim). Solo recursos locales. -->
+  <link rel="stylesheet" href="../../vendor/fonts.css">
+  <link rel="stylesheet" href="../../css/tokens.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/pelucave.css">
+  <style>
+    /* Maquetación de la página de prueba: solo tokens, sin colores literales. */
+    .demo { max-width: var(--container-max); margin: 0 auto; padding: var(--space-6) var(--gutter) var(--space-8); }
+    .demo-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .demo-head h1 { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--lh-heading); letter-spacing: var(--tracking-heading); }
+    .demo-head p { color: var(--muted); margin-top: var(--space-2); max-width: 60ch; }
+    .demo-actions { display: flex; gap: var(--space-2) var(--space-3); flex-wrap: wrap; align-items: end; }
+    .demo-btn {
+      min-height: var(--control-h); padding: 0 var(--space-4); border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+      font: inherit; font-size: var(--text-sm); cursor: pointer;
+    }
+    .demo-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); }
+    .demo-field { display: grid; gap: var(--space-1); min-width: 260px; font-size: var(--text-sm); color: var(--muted); }
+    .demo-field input[type="range"] { accent-color: var(--accent); width: 100%; min-height: var(--control-h-sm); }
+    .demo-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-5); align-items: start; }
+    .demo-stage {
+      grid-column: span 12; min-width: 0; padding: var(--space-5); border-radius: var(--radius-md);
+      background: var(--glass-b-bg); border: 1px solid var(--glass-b-border); box-shadow: var(--glass-b-highlight);
+      overflow: visible;
+    }
+    .demo-stage .pv-root { max-width: 560px; margin: 0 auto; --pv-paper: var(--surface-1); }
+    .demo-panel { grid-column: span 12; display: grid; gap: var(--space-3); align-content: start; }
+    .demo-readouts { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-4); font-size: var(--text-sm); }
+    .demo-readouts dt { color: var(--muted); }
+    .demo-readouts dd { font-variant-numeric: var(--font-numeric); color: var(--ink); }
+    .demo-note { color: var(--muted); font-size: var(--text-sm); max-width: 60ch; }
+    @media (min-width: 900px) {
+      .demo-stage { grid-column: span 7; }
+      .demo-panel { grid-column: span 5; }
+    }
+  </style>
+</head>
+<body>
+  <main class="demo" id="contenido">
+    <div class="demo-head">
+      <div>
+        <h1>Transición Pelucave</h1>
+        <p>Página de prueba de DSL.anim.pelucave: anticipación, apertura de la mandíbula bivalva, eyección y recuperación elástica con los parámetros calibrados en el arnés (inmutables).</p>
+      </div>
+      <div class="demo-actions">
+        <button type="button" class="demo-btn" id="btn-theme" data-testid="demo-theme">Tema claro</button>
+        <button type="button" class="demo-btn" id="btn-play" data-testid="demo-play">Reproducir</button>
+        <button type="button" class="demo-btn" id="btn-reset" data-testid="demo-reset">Reiniciar</button>
+        <button type="button" class="demo-btn" id="btn-motion" data-testid="demo-motion" aria-pressed="false">Movimiento reducido</button>
+        <label class="demo-field">Instante (s)
+          <input type="range" id="i-time" min="0" max="1.8" step="0.001" value="0" data-testid="demo-time">
+        </label>
+      </div>
+    </div>
+    <div class="demo-grid">
+      <section class="demo-stage" id="stage" data-testid="demo-stage" aria-label="Escenario de la transición"></section>
+      <section class="demo-panel">
+        <dl class="demo-readouts">
+          <dt>Instante</dt><dd id="ro-time" data-testid="demo-ro-time">0.000 s</dd>
+          <dt>Fase</dt><dd id="ro-phase" data-testid="demo-ro-phase">anticipacion</dd>
+          <dt>Duración</dt><dd id="ro-duration" data-testid="demo-ro-duration">—</dd>
+          <dt>Mandíbula inferior</dt><dd id="ro-mand" data-testid="demo-ro-mand">—</dd>
+          <dt>Separación dental</dt><dd id="ro-sep" data-testid="demo-ro-sep">—</dd>
+          <dt>Cabeza</dt><dd id="ro-head" data-testid="demo-ro-head">—</dd>
+          <dt>Punto de eyección</dt><dd id="ro-boca" data-testid="demo-ro-boca">—</dd>
+        </dl>
+        <p class="demo-note">Arrastre el deslizador para hacer scrub: el mismo instante reproduce siempre el mismo fotograma. Con <code>?t=0.46</code> en la dirección la página queda fija en ese instante (capturas deterministas). Con movimiento reducido, «Reproducir» salta al estado final.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="../../js/core/ns.js"></script>
+  <script src="../../js/anim/pelucaveParams.js"></script>
+  <script src="../../js/anim/pelucaveAsset.js"></script>
+  <script src="../../js/anim/pelucaveTransition.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var DSL = window.DSL;
+      var util = DSL.util;
+      var stage = document.getElementById('stage');
+      var rig = DSL.anim.pelucave.createRig(stage, { label: 'Logo Pelucave animado' });
+
+      var ro = {
+        time: document.getElementById('ro-time'),
+        phase: document.getElementById('ro-phase'),
+        duration: document.getElementById('ro-duration'),
+        mand: document.getElementById('ro-mand'),
+        sep: document.getElementById('ro-sep'),
+        head: document.getElementById('ro-head'),
+        boca: document.getElementById('ro-boca')
+      };
+      var timeInput = document.getElementById('i-time');
+      timeInput.max = String(rig.duration);
+      ro.duration.textContent = util.formatNumber(rig.duration, 4, { decimals: 2 }) + ' s';
+
+      function fmt(v, d) { return util.formatNumber(v, 5, { decimals: d === undefined ? 2 : d }); }
+
+      function paint() {
+        var s = rig.state();
+        var p = rig.ejectionPoint();
+        ro.time.textContent = fmt(rig.time(), 3) + ' s';
+        ro.phase.textContent = rig.phaseAt();
+        ro.mand.textContent = fmt(s.mandAngle, 1) + '° · dx ' + fmt(s.mandX, 1) + ' · dy ' + fmt(s.mandY, 1);
+        ro.sep.textContent = fmt(Math.max(0, s.separacion), 1) + ' u · superior ' + fmt(s.supAngle, 1) + '°';
+        ro.head.textContent = fmt(s.cabezaRot, 1) + '° · x ' + fmt(s.cabezaX, 1) + ' · sx ' + fmt(s.cabezaSx, 3);
+        ro.boca.textContent = p ? '(' + fmt(p.x, 1) + ', ' + fmt(p.y, 1) + ') u' : '—';
+        if (document.activeElement !== timeInput) timeInput.value = String(rig.time());
+      }
+
+      // Lecturas a ~10 Hz mientras se reproduce (nunca por cuadro).
+      var readoutTimer = null;
+      function startReadouts() {
+        if (readoutTimer !== null) return;
+        readoutTimer = window.setInterval(function () {
+          paint();
+          if (!rig.isPlaying()) {
+            window.clearInterval(readoutTimer);
+            readoutTimer = null;
+            paintPlay();
+          }
+        }, 100);
+      }
+
+      var playBtn = document.getElementById('btn-play');
+      function paintPlay() { playBtn.textContent = rig.isPlaying() ? 'Pausar' : 'Reproducir'; }
+      playBtn.addEventListener('click', function () {
+        if (rig.isPlaying()) {
+          rig.stop();
+        } else {
+          rig.play({ from: rig.time() >= rig.duration ? 0 : rig.time(), onComplete: paint });
+          startReadouts();
+        }
+        paintPlay();
+        paint();
+      });
+
+      document.getElementById('btn-reset').addEventListener('click', function () {
+        rig.reset();
+        paintPlay();
+        paint();
+      });
+
+      timeInput.addEventListener('input', function () {
+        rig.stop();
+        rig.setTime(Number(timeInput.value));
+        paintPlay();
+        paint();
+      });
+
+      var themeBtn = document.getElementById('btn-theme');
+      themeBtn.addEventListener('click', function () {
+        var next = DSL.prefs.toggleTheme();
+        themeBtn.textContent = next === 'dark' ? 'Tema claro' : 'Tema oscuro';
+      });
+
+      var motionBtn = document.getElementById('btn-motion');
+      motionBtn.addEventListener('click', function () {
+        var on = motionBtn.getAttribute('aria-pressed') !== 'true';
+        motionBtn.setAttribute('aria-pressed', String(on));
+        DSL.prefs.setReducedMotion(on ? true : null);
+      });
+
+      // ?t=0.46 → fotograma fijo (capturas deterministas); ?autoplay=1 → reproduce al cargar.
+      var q = new URLSearchParams(document.location.search);
+      if (q.has('t')) rig.setTime(Number(q.get('t')));
+      paint();
+      if (q.get('autoplay') === '1') {
+        rig.play({ onComplete: paint });
+        startReadouts();
+        paintPlay();
+      }
+
+      DSL.app.pelucaveDemo = { rig: rig, paint: paint };
+      document.documentElement.setAttribute('data-ready', 'true');
+    })();
+  </script>
+</body>
+</html>

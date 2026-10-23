@@ -58,6 +58,7 @@ npm install          # dependencias de desarrollo (exactas, sin rangos)
 |---|---|
 | `npm run vendor` | Copia en `vendor/` Chart.js, KaTeX (CSS reescrito para usar solo woff2) y las fuentes woff2, y genera `vendor/fonts.css` y `vendor/VERSIONS.json`. Es determinista |
 | `npm run icons` | Genera `js/ui/icons-data.js` con los iconos Lucide listados en `tools/icons/*.list`. Falla si un nombre no existe |
+| `npm run pelucave` | Genera `js/anim/pelucaveAsset.js` (geometría por capas del logo Pelucave) desde `tools/pelucave/svg-completo.svg`. `node tools/pelucave.mjs --check` solo verifica. Ver `docs/api/pelucave.md` |
 | `npm run build` | Genera `dist/sistemas-dinamicos.html`, el archivo autocontenido. No incrusta las caras tipográficas que la app no puede usar (lista `DIST_PRUNED_FONTS` de `tools/lib.mjs`: KaTeX Fraktur, Script, Typewriter, SansSerif y negrita cursiva, Bricolage latin-ext y Plex cursiva latin-ext) y falla si `js/` usa una orden de TeX que las pediría (`\mathfrak`, `\mathscr`, `\mathtt`, `\texttt`, `\mathsf`, `\boldsymbol`, `\bm`…). Mismas entradas, mismos bytes; para fechar el banner, `BUILD_DATE=AAAA-MM-DD npm run build`. `node tools/build.mjs --out=<archivo>` escribe en otra ruta sin tocar `dist/` |
 | `npm test` | Pruebas unitarias (`node:test`) de `tests/unit/` |
 | `npm run test:e2e` | Pruebas de navegador (Playwright, Chromium, `file://`) sobre `index.html` (proyectos `src` y `src-timing`) y sobre el archivo único (`dist` y `dist-timing`); las pruebas que miden tiempo real corren al final, de una en una (ver «Pruebas») |
@@ -109,15 +110,16 @@ Resultados que dejan en `test-results/integrator/`:
 
 ```
 index.html              página: secciones #inicio, #conceptos, #modelado, #galeria, #transferencia
-css/                    tokens de diseño (tokens.css), base, componentes, shell, gráficas, escenas, secciones/
+css/                    tokens de diseño (tokens.css), base, componentes, shell, gráficas, escenas, pelucave.css, secciones/
 js/core/                ns.js (espacio de nombres DSL), numeric.js, tf.js, latex.js
 js/ui/                  iconos generados, componentes, cabecera y pie
 js/viz/                 gráficas (Chart.js) y escenas físicas animadas (scenes/)
+js/anim/                transición Pelucave: parámetros calibrados (inmutables), asset generado y cinemática (docs/api/pelucave.md)
 js/systems/             registro de modelos, simulador y modelos (masa-resorte, tanques, RLC, SIR, mercado, péndulo)
 js/sections/            hero, conceptos, asistente de modelado, galería, motor de G(s)
 js/app.js               arranque: monta cada sección
 vendor/                 bibliotecas y fuentes copiadas (generado por tools/vendor.mjs)
-tools/                  vendor.mjs, icons.mjs, build.mjs y las listas de iconos
+tools/                  vendor.mjs, icons.mjs, pelucave.mjs, build.mjs, las listas de iconos y pelucave/svg-completo.svg
 tests/                  unit/, e2e/ (un spec por módulo, más integration y responsive), helpers/, pages/, crosscheck/
 dist/                   sistemas-dinamicos.html (generado por tools/build.mjs)
 test-results/           salidas de Playwright (integrator/: capturas y tiempos de fotograma)
