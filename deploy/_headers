@@ -1,0 +1,23 @@
+# deploy/_headers — Propietario: architect.
+# Cabeceras HTTP que Cloudflare Pages aplica al servir _site/ (npm run site copia este archivo ahí).
+# Sintaxis: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# La página es un único index.html autocontenido (CSS, scripts y fuentes incrustados) que no hace
+# ninguna petición de red, así que la CSP solo necesita 'self', datos incrustados y código en línea.
+# Si activa Cloudflare Web Analytics, añada https://static.cloudflareinsights.com a script-src y
+# https://cloudflareinsights.com a connect-src. Rocket Loader debe quedar desactivado (ver docs/DEPLOY.md).
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+
+# La página cambia en cada despliegue: el navegador la revalida siempre (ETag) y el borde la sirve en 304.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

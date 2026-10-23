@@ -1,11 +1,9 @@
 {
-  // Configuración de Cloudflare: publica solo la página generada, no todo el repositorio.
+  // Cloudflare Pages, proyecto «pelucave» (pelucave.com). Publica solo _site/, que genera `npm run site`
+  // (index.html autocontenido + deploy/_headers + deploy/_redirects); nunca el repositorio completo.
+  // «pages_build_output_dir» debe coincidir con «Build output directory» del panel cuando el proyecto
+  // está conectado a Git. Guía completa: docs/DEPLOY.md.
   "name": "pelucave",
-  "compatibility_date": "2026-10-12",
-  "build": {
-    "command": "node tools/build.mjs --out=_site/index.html"
-  },
-  "assets": {
-    "directory": "./_site"
-  }
+  "pages_build_output_dir": "./_site",
+  "compatibility_date": "2026-10-12"
 }

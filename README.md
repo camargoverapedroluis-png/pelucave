@@ -60,6 +60,10 @@ npm install          # dependencias de desarrollo (exactas, sin rangos)
 | `npm run icons` | Genera `js/ui/icons-data.js` con los iconos Lucide listados en `tools/icons/*.list`. Falla si un nombre no existe |
 | `npm run pelucave` | Genera `js/anim/pelucaveAsset.js` (geometría por capas del logo Pelucave) desde `tools/pelucave/svg-completo.svg`. `node tools/pelucave.mjs --check` solo verifica. Ver `docs/api/pelucave.md` |
 | `npm run build` | Genera `dist/sistemas-dinamicos.html`, el archivo autocontenido. No incrusta las caras tipográficas que la app no puede usar (lista `DIST_PRUNED_FONTS` de `tools/lib.mjs`: KaTeX Fraktur, Script, Typewriter, SansSerif y negrita cursiva, Bricolage latin-ext y Plex cursiva latin-ext) y falla si `js/` usa una orden de TeX que las pediría (`\mathfrak`, `\mathscr`, `\mathtt`, `\texttt`, `\mathsf`, `\boldsymbol`, `\bm`…). Mismas entradas, mismos bytes; para fechar el banner, `BUILD_DATE=AAAA-MM-DD npm run build`. `node tools/build.mjs --out=<archivo>` escribe en otra ruta sin tocar `dist/` |
+| `npm run site` | Genera `_site/` para Cloudflare Pages: `index.html` (la misma página autocontenida) más `deploy/_headers` y `deploy/_redirects`. Es lo único que se publica |
+| `npm run site:dev` | Sirve `_site/` en `http://localhost:8788` con Wrangler, aplicando cabeceras y redirecciones como en producción |
+| `npm run site:check -- <url>` | Abre la URL publicada con Chromium y falla si hay errores de consola, violaciones de la CSP, peticiones fallidas o a otro origen, o rutas rotas |
+| `npm run deploy` | `npm test` → `npm run site` → `wrangler pages deploy` (producción, rama `main`). `npm run deploy:preview` publica una vista previa |
 | `npm test` | Pruebas unitarias (`node:test`) de `tests/unit/` |
 | `npm run test:e2e` | Pruebas de navegador (Playwright, Chromium, `file://`) sobre `index.html` (proyectos `src` y `src-timing`) y sobre el archivo único (`dist` y `dist-timing`); las pruebas que miden tiempo real corren al final, de una en una (ver «Pruebas») |
 | `npm run crosscheck` | Contrasta el motor numérico con NumPy y SciPy (`uv run --with numpy --with scipy python tests/crosscheck/run.py`) |
@@ -106,6 +110,10 @@ Resultados que dejan en `test-results/integrator/`:
 - `frames-<página>.json` (`src` o `dist`): tiempos entre fotogramas (mediana, percentil 95 y máximo) medidos durante 3 s.
 - `fonts-<proyecto>.json`: cada cara de `document.fonts` (familia, estilo, peso, rango y estado) tras el recorrido completo.
 
+## Despliegue
+
+La página se publica en [Cloudflare Pages](https://pages.cloudflare.com/) (proyecto `pelucave`, dominio `pelucave.com`) a partir de `_site/`, que genera `npm run site`: la página autocontenida como `index.html` más `deploy/_headers` (CSP y cabeceras de seguridad) y `deploy/_redirects`. `wrangler.jsonc` fija esa carpeta de salida. Guía completa (Git o Wrangler, DNS, TLS, optimización y comprobaciones): `docs/DEPLOY.md`.
+
 ## Estructura
 
 ```
@@ -119,9 +127,12 @@ js/systems/             registro de modelos, simulador y modelos (masa-resorte, 
 js/sections/            hero, conceptos, asistente de modelado, galería, laboratorio de la bicicleta (bikelab.js), motor de G(s)
 js/app.js               arranque: monta cada sección
 vendor/                 bibliotecas y fuentes copiadas (generado por tools/vendor.mjs)
-tools/                  vendor.mjs, icons.mjs, pelucave.mjs, build.mjs, las listas de iconos y pelucave/svg-completo.svg
+tools/                  vendor.mjs, icons.mjs, pelucave.mjs, build.mjs, site.mjs, check-site.mjs, las listas de iconos y pelucave/svg-completo.svg
+deploy/                 _headers y _redirects de Cloudflare Pages (se copian a _site/ con npm run site)
+wrangler.jsonc          proyecto de Cloudflare Pages «pelucave»: carpeta de salida _site/ (docs/DEPLOY.md)
 tests/                  unit/, e2e/ (un spec por módulo, más integration y responsive), helpers/, pages/, crosscheck/
 dist/                   sistemas-dinamicos.html (generado por tools/build.mjs)
+_site/                  lo que se publica en Cloudflare Pages (generado por tools/site.mjs; no se versiona)
 test-results/           salidas de Playwright (integrator/: capturas y tiempos de fotograma)
 docs/                   especificación, arquitectura, guía de diseño y API de cada módulo (api/)
 ```
