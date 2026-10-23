@@ -119,6 +119,12 @@ DSL.anim.pelucaveOverlay.isRunning() → boolean
 DSL.anim.pelucaveOverlay.cancel() → boolean               // termina en el acto: sección asentada, capa desmontada
 ```
 
+**Si «no pasa nada» al pulsar el botón.** Compruebe en la consola `DSL.prefs.reducedMotion`: si es `true`, el sistema
+declara «reducir movimiento» (en Windows: Rendimiento → «Animar controles y elementos dentro de las ventanas»
+desactivado, habitual en Windows Server) y la app sustituye toda animación por un cambio instantáneo, esta
+transición incluida. Para verla igualmente: `index.html?movimiento=normal`, o `DSL.prefs.setReducedMotion(false)`
+en la consola, o active los efectos visuales del sistema.
+
 **Disparo.** El ancla «Simular un sistema» del inicio (`js/sections/hero.js`, `data-testid="hero-cta-galeria"`)
 llama a `navigate('galeria')` en su clic y solo evita la navegación por defecto si devuelve `true`. Devuelve
 `false` con movimiento reducido o si falta el módulo (el shell desplaza la página como siempre) y `true`

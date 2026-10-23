@@ -333,6 +333,7 @@ The full reference is `docs/api/ns.md`. Summary:
 
 - `DSL.prefs.reducedMotion` is a live boolean that tracks `(prefers-reduced-motion: reduce)` and emits `motion:change` `{ reducedMotion }`.
 - `DSL.prefs.setReducedMotion(true|false|null)` forces the value; `null` returns control to the system.
+- The query parameter `?movimiento=normal|reducido` forces the value for that page load only (nothing is persisted). It exists for local checks on machines whose OS reports `prefers-reduced-motion: reduce` (Windows Server with visual effects off): there, every animation in the app, the Pelucave transition included, is replaced by an instant change by design.
 - `DSL.prefs.theme` is `'dark' | 'light'`, read from `<html data-theme>`.
 - `DSL.prefs.setTheme(theme, { persist = true })` does four things: sets `data-theme`, saves to `localStorage['dsl.v1.theme']` as JSON inside try/catch, updates `<meta name="theme-color">` to `--bg`, and emits `theme:change` `{ theme }` when the theme changed.
 - `DSL.prefs.toggleTheme()` switches between the two themes.

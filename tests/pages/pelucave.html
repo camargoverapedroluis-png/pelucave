@@ -55,7 +55,7 @@
         <button type="button" class="demo-btn" id="btn-theme" data-testid="demo-theme">Tema claro</button>
         <button type="button" class="demo-btn" id="btn-play" data-testid="demo-play">Reproducir</button>
         <button type="button" class="demo-btn" id="btn-reset" data-testid="demo-reset">Reiniciar</button>
-        <button type="button" class="demo-btn" id="btn-motion" data-testid="demo-motion" aria-pressed="false">Movimiento reducido</button>
+        <button type="button" class="demo-btn" id="btn-motion" data-testid="demo-motion">Movimiento: sistema</button>
         <label class="demo-field">Instante (s)
           <input type="range" id="i-time" min="0" max="1.8" step="0.001" value="0" data-testid="demo-time">
         </label>
@@ -73,7 +73,7 @@
           <dt>Cabeza</dt><dd id="ro-head" data-testid="demo-ro-head">—</dd>
           <dt>Punto de eyección</dt><dd id="ro-boca" data-testid="demo-ro-boca">—</dd>
         </dl>
-        <p class="demo-note">Arrastre el deslizador para hacer scrub: el mismo instante reproduce siempre el mismo fotograma. Con <code>?t=0.46</code> en la dirección la página queda fija en ese instante (capturas deterministas). Con movimiento reducido, «Reproducir» salta al estado final.</p>
+        <p class="demo-note">Arrastre el deslizador para hacer scrub: el mismo instante reproduce siempre el mismo fotograma. Con <code>?t=0.46</code> en la dirección la página queda fija en ese instante (capturas deterministas). Con movimiento reducido (el que declare el sistema o el forzado con el botón), «Reproducir» salta al estado final; <code>?movimiento=normal</code> en la dirección fuerza las animaciones desde la carga.</p>
       </section>
     </div>
   </main>
@@ -163,12 +163,24 @@
         themeBtn.textContent = next === 'dark' ? 'Tema claro' : 'Tema oscuro';
       });
 
+      // Tres estados: sistema (lo que declare el SO) → normal forzado → reducido forzado. En equipos que declaran
+      // «reducir movimiento» (Windows Server con efectos visuales apagados), «Reproducir» salta al final salvo
+      // que se fuerce el movimiento normal.
       var motionBtn = document.getElementById('btn-motion');
+      var MOTION_MODES = [null, false, true];
+      var motionIndex = 0;
+      function paintMotion() {
+        var mode = MOTION_MODES[motionIndex];
+        var system = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reducido' : 'normal';
+        motionBtn.textContent = mode === null ? 'Movimiento: sistema (' + system + ')' : mode ? 'Movimiento: reducido (forzado)' : 'Movimiento: normal (forzado)';
+        motionBtn.setAttribute('data-mode', mode === null ? 'sistema' : mode ? 'reducido' : 'normal');
+      }
       motionBtn.addEventListener('click', function () {
-        var on = motionBtn.getAttribute('aria-pressed') !== 'true';
-        motionBtn.setAttribute('aria-pressed', String(on));
-        DSL.prefs.setReducedMotion(on ? true : null);
+        motionIndex = (motionIndex + 1) % MOTION_MODES.length;
+        DSL.prefs.setReducedMotion(MOTION_MODES[motionIndex]);
+        paintMotion();
       });
+      paintMotion();
 
       // ?t=0.46 → fotograma fijo (capturas deterministas); ?autoplay=1 → reproduce al cargar.
       var q = new URLSearchParams(document.location.search);

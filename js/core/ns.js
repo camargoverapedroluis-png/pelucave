@@ -845,7 +845,12 @@
     DSL.bus.emit('motion:change', { reducedMotion: v });
   }
 
-  prefs.reducedMotion = !!(rmList && rmList.matches);
+  // Comprobación en local: ?movimiento=normal|reducido fuerza la preferencia solo durante esta carga (no se
+  // guarda). Útil en equipos cuyo sistema declara «reducir movimiento» (p. ej. Windows Server con los efectos
+  // visuales desactivados), donde toda animación se sustituye por cambios instantáneos.
+  var motionParam = global.location && /[?&]movimiento=(normal|reducido)(?:&|$)/.exec(String(global.location.search || ''));
+  if (motionParam) rmOverride = motionParam[1] === 'reducido';
+  prefs.reducedMotion = rmOverride === null ? !!(rmList && rmList.matches) : rmOverride;
 
   function onRmChange(e) {
     if (rmOverride === null) setReducedMotionValue(e && e.matches);
