@@ -1,14 +1,14 @@
 # deploy/_redirects — Propietario: architect.
-# Redirecciones de Cloudflare Pages (npm run site copia este archivo a _site/).
-# Sintaxis: https://developers.cloudflare.com/pages/configuration/redirects/
+# Redirecciones que Cloudflare aplica al servir _site/ (npm run site copia este archivo ahí). El mismo
+# archivo vale para un Worker con assets estáticos (producción actual) y para Cloudflare Pages.
+# Sintaxis: https://developers.cloudflare.com/workers/static-assets/redirects/
 #
-# La aplicación enruta por #hash dentro de index.html. Como no existe 404.html, Pages ya sirve
-# index.html con 200 para cualquier ruta desconocida (comportamiento SPA): no hace falta la regla
-# "/* /index.html 200".
+# La aplicación enruta por #hash dentro de index.html. Las rutas desconocidas ya devuelven index.html
+# con 200 (Worker: assets.not_found_handling = "single-page-application" en wrangler.jsonc; Pages: no
+# existe 404.html), así que no hace falta la regla "/* /index.html 200".
 #
-# Aquí solo caben orígenes relativos (Wrangler rechaza "https://host/*" como origen). Las
-# redirecciones por nombre de host (www.pelucave.com -> pelucave.com y pelucave.pages.dev ->
-# pelucave.com) se hacen con una Redirect Rule y con Bulk Redirects en el panel: docs/DEPLOY.md §3.4.
+# Aquí solo caben orígenes relativos (Wrangler rechaza "https://host/*" como origen). La redirección
+# www.pelucave.com -> pelucave.com se hace con una Redirect Rule en el panel: docs/DEPLOY.md §3.3.
 
 # Nombre del archivo único en el repositorio: siempre a la raíz.
 /sistemas-dinamicos.html  /  301

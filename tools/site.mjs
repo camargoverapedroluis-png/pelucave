@@ -1,7 +1,7 @@
 // tools/site.mjs — Propietario: architect.
-// Prepara la carpeta que publica Cloudflare Pages: _site/index.html (la página autocontenida que genera
-// tools/build.mjs) más los archivos de deploy/ (_headers, _redirects). Es lo único que sube a Cloudflare;
-// el repositorio, vendor/ y dist/ nunca se publican. Guía: docs/DEPLOY.md.
+// Prepara la carpeta que publica Cloudflare: _site/index.html (la página autocontenida que genera
+// tools/build.mjs) más los archivos de deploy/ (_headers, _redirects). Es lo único que sube a Cloudflare
+// (wrangler.jsonc → assets.directory); el repositorio, vendor/ y dist/ nunca se publican. Guía: docs/DEPLOY.md.
 //
 // Uso: node tools/site.mjs                       (npm run site)
 //      BUILD_DATE=2026-10-23 node tools/site.mjs  (fecha el banner, como en tools/build.mjs)

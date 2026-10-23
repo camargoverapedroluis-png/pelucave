@@ -2,8 +2,9 @@
 // Comprobación de la página publicada (o de `npm run site:dev` en local): la abre con Chromium, recorre
 // todas las secciones para que se completen las perezosas y falla si hay errores de consola o de página,
 // violaciones de la CSP, peticiones fallidas, respuestas 4xx/5xx o peticiones a otro origen (la app no
-// debe tocar la red, así que tampoco puede haber bloqueos CORS). Muestra las cabeceras relevantes y
-// comprueba que una ruta desconocida devuelve la página (SPA) y que el nombre antiguo redirige.
+// debe tocar la red, así que tampoco puede haber bloqueos CORS; el beacon de Cloudflare Web Analytics
+// se anota, no es un fallo). Muestra las cabeceras relevantes y comprueba que una ruta desconocida
+// devuelve la página (SPA) y que el nombre antiguo redirige.
 //
 // Uso: node tools/check-site.mjs https://pelucave.com          (npm run site:check -- https://pelucave.com)
 //      PW_CHANNEL=chrome node tools/check-site.mjs http://localhost:8788   (con el Chrome instalado,
@@ -25,9 +26,14 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 page.on('console', (m) => { if (m.type() === 'error') problems.push(`console.error: ${m.text()}`); });
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 page.on('requestfailed', (r) => problems.push(`requestfailed: ${r.url()} (${r.failure()?.errorText})`));
+// Cloudflare inyecta el beacon de Web Analytics en el HTML; la CSP de deploy/_headers lo permite.
+const CF_BEACON = /^https:\/\/(static\.)?cloudflareinsights\.com\//;
+const notes = [];
 page.on('request', (r) => {
   const u = r.url();
-  if (!u.startsWith(origin + '/') && !/^(data|blob|about):/.test(u)) problems.push(`peticion a otro origen: ${u}`);
+  if (u.startsWith(origin + '/') || /^(data|blob|about):/.test(u)) return;
+  if (CF_BEACON.test(u)) notes.push(`beacon de Cloudflare Web Analytics: ${u}`);
+  else problems.push(`peticion a otro origen: ${u}`);
 });
 page.on('response', (r) => { if (r.status() >= 400) problems.push(`HTTP ${r.status()}: ${r.url()}`); });
 await page.addInitScript(() => {
@@ -62,6 +68,7 @@ for (const p of ['/ruta-inexistente', '/sistemas-dinamicos.html']) {
 }
 await browser.close();
 
+for (const n of notes) console.log(`  nota: ${n}`);
 if (problems.length) {
   console.error('\nProblemas:\n' + problems.map((p) => '  - ' + p).join('\n'));
   process.exit(1);

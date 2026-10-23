@@ -51,10 +51,10 @@ tools/lib.mjs                      architect   shared helpers for tools
 tools/vendor.mjs                   architect   node_modules → vendor/ (deterministic)
 tools/icons.mjs                    architect   tools/icons/*.list → js/ui/icons-data.js
 tools/build.mjs                    architect   index.html → dist/sistemas-dinamicos.html
-tools/site.mjs                     architect   build.mjs → _site/index.html + deploy/*: what Cloudflare Pages publishes (docs/DEPLOY.md)
+tools/site.mjs                     architect   build.mjs → _site/index.html + deploy/*: what Cloudflare publishes (docs/DEPLOY.md)
 tools/check-site.mjs               architect   post-deploy check of a URL: console, CSP, network, routes
-deploy/_headers, deploy/_redirects architect   HTTP headers (CSP, HSTS…) and redirects for Cloudflare Pages
-wrangler.jsonc                     architect   Cloudflare Pages project «pelucave»: pages_build_output_dir = ./_site
+deploy/_headers, deploy/_redirects architect   HTTP headers (CSP, HSTS…) and redirects served by Cloudflare (Workers static assets or Pages)
+wrangler.jsonc                     architect   Cloudflare Worker «pelucave» (static assets): build.command = tools/site.mjs, assets.directory = ./_site
 tools/icons/base.list              architect   common Lucide names
 tools/icons/<key>.list             <key>       each agent's extra icon names (one per line)
 tools/pelucave.mjs                 anim        tools/pelucave/svg-completo.svg → js/anim/pelucaveAsset.js (deterministic, --check)
